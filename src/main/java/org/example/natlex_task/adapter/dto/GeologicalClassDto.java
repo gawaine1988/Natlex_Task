@@ -1,13 +1,13 @@
-package org.example.natlex_task.domain;
+package org.example.natlex_task.adapter.dto;
 
 import lombok.*;
 
 @Getter
 @Setter
-@Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class GeologicalClass {
+@Builder
+public class GeologicalClassDto {
     private String name;
     private String code;
 }

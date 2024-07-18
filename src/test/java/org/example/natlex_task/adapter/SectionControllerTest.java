@@ -2,8 +2,8 @@ package org.example.natlex_task.adapter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
-import org.example.natlex_task.domain.GeologicalClass;
-import org.example.natlex_task.domain.Section;
+import org.example.natlex_task.domain.model.GeologicalClass;
+import org.example.natlex_task.domain.model.Section;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,7 +16,6 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
