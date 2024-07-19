@@ -1,5 +1,6 @@
 package org.example.natlex_task.adapter;
 
+import jakarta.validation.Valid;
 import org.example.natlex_task.adapter.dto.ApiResponse;
 import org.example.natlex_task.adapter.dto.SectionDto;
 import org.example.natlex_task.adapter.mapper.SectionMapper;
@@ -25,7 +26,7 @@ public class SectionController {
     SectionService sectionService;
 
     @PostMapping
-    public ApiResponse<UUID> createSection(@RequestBody SectionDto createSectionRequest) {
+    public ApiResponse<UUID> createSection(@Valid @RequestBody SectionDto createSectionRequest) {
         Section section = sectionMapper.toModel(createSectionRequest);
         UUID id = sectionService.createSection(section);
         return ApiResponse.ok(id);
