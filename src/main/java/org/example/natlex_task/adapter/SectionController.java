@@ -7,10 +7,8 @@ import org.example.natlex_task.adapter.mapper.SectionMapper;
 import org.example.natlex_task.application.SectionService;
 import org.example.natlex_task.domain.model.Section;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
@@ -30,5 +28,10 @@ public class SectionController {
         Section section = sectionMapper.toModel(createSectionRequest);
         UUID id = sectionService.createSection(section);
         return ApiResponse.ok(id);
+    }
+
+    @GetMapping("/{sectionId}")
+    public ApiResponse<SectionDto> getSectionById(@PathVariable("sectionId")  String sectionId) {
+        return ApiResponse.ok();
     }
 }

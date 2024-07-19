@@ -4,6 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
 import org.example.natlex_task.adapter.dto.GeologicalClassDto;
 import org.example.natlex_task.adapter.dto.SectionDto;
+import org.example.natlex_task.domain.model.GeologicalClass;
+import org.example.natlex_task.domain.model.Section;
+import org.example.natlex_task.domain.repository.SectionRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,6 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -37,6 +41,9 @@ class SectionControllerTest {
 
     @Autowired
     protected ObjectMapper mapper;
+
+    @Autowired
+    SectionRepository sectionRepository;
 
     private static final String SECTION_PATH = "/sections";
 
@@ -95,6 +102,34 @@ class SectionControllerTest {
                 .andExpect(jsonPath("$.statusMessage", is("[Section name cannot be blank or null]")));
 
 
+    }
+
+
+    @Test
+    @SneakyThrows
+    void should_find_section() {
+        //Given
+        UUID geologicalUuid = UUID.randomUUID();
+        UUID sectionId = UUID.randomUUID();
+        GeologicalClass gc = GeologicalClass.builder().geologicalClassId(geologicalUuid).code("GC11").name("Geo Class 11").build();
+        ArrayList<GeologicalClass> geologicalClasses = new ArrayList<>() {{
+            add(gc);
+        }};
+        Section section = Section.builder().sectionId(sectionId).name("Section 1").geologicalClasses(geologicalClasses).build();
+        sectionRepository.save(section);
+
+        String savedSectionJson = mapper.writeValueAsString(section);
+
+
+        //When
+        String requestUrl = "http://localhost:8081" + SECTION_PATH + "/" + sectionId;
+        MockHttpServletRequestBuilder content = get(requestUrl).contentType(APPLICATION_JSON);
+        ResultActions response = mvc.perform(content);
+
+        //Then
+        response.andExpect(status().isOk())
+                .andExpect(jsonPath("$.statusCode", is(BAD_REQUEST.value())))
+                .andExpect(jsonPath("$.response").value(equals(savedSectionJson)));
     }
 
 }
