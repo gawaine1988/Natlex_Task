@@ -4,9 +4,7 @@ import org.example.natlex_task.adapter.dto.GeologicalClassDto;
 import org.example.natlex_task.adapter.dto.SectionDto;
 import org.example.natlex_task.domain.model.GeologicalClass;
 import org.example.natlex_task.domain.model.Section;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.Named;
+import org.mapstruct.*;
 import org.mapstruct.factory.Mappers;
 
 import java.util.List;
@@ -16,10 +14,18 @@ import java.util.stream.Collectors;
 @Mapper(componentModel = "spring")
 public interface SectionMapper {
     SectionMapper sectionMapper  = Mappers.getMapper(SectionMapper.class);
-    @Mapping(target = "sectionId", expression = "java(generateUUID())")
+    @Mapping(target = "sectionId", ignore = true)
     @Mapping(target = "geologicalClasses", source = "geologicalClasses", qualifiedByName = "createGeologicalClasses")
     Section toModel(SectionDto sectionDto);
 
+    @AfterMapping
+    default void setSectionIdIfNull(@MappingTarget Section section, SectionDto sectionDto) {
+        if (sectionDto.getSectionId() == null) {
+            section.setSectionId(generateUUID());
+        } else {
+            section.setSectionId(sectionDto.getSectionId());
+        }
+    }
     default UUID generateUUID() {
         return UUID.randomUUID();
     }

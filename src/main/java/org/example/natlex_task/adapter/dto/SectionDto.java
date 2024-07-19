@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 import java.util.List;
+import java.util.UUID;
 
 
 @Getter
@@ -14,6 +15,7 @@ import java.util.List;
 @NoArgsConstructor
 @Builder
 public class SectionDto {
+    private UUID sectionId;
 
     @NotBlank(message = "Section name cannot be blank or null")
     private String name;
