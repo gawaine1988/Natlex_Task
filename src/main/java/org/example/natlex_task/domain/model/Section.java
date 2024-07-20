@@ -17,6 +17,7 @@ import static java.sql.Types.VARCHAR;
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "sections")
+@EqualsAndHashCode
 public class Section {
     @Id
     @Column(name = "section_id", updatable = false, nullable = false, columnDefinition = "VARCHAR(36)")

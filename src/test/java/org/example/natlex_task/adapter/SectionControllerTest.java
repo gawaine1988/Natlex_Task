@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpStatus;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
@@ -118,18 +119,44 @@ class SectionControllerTest {
         Section section = Section.builder().sectionId(sectionId).name("Section 1").geologicalClasses(geologicalClasses).build();
         sectionRepository.save(section);
 
-        String savedSectionJson = mapper.writeValueAsString(section);
-
-
         //When
         String requestUrl = "http://localhost:8081" + SECTION_PATH + "/" + sectionId;
-        MockHttpServletRequestBuilder content = get(requestUrl).contentType(APPLICATION_JSON);
+        MockHttpServletRequestBuilder content = get(requestUrl);
         ResultActions response = mvc.perform(content);
 
         //Then
         response.andExpect(status().isOk())
-                .andExpect(jsonPath("$.statusCode", is(BAD_REQUEST.value())))
-                .andExpect(jsonPath("$.response").value(equals(savedSectionJson)));
+                .andExpect(jsonPath("$.response.sectionId").value(section.getSectionId().toString()))
+                .andExpect(jsonPath("$.response.name").value(section.getName()))
+                .andExpect(jsonPath("$.response.geologicalClasses",hasSize(1)))
+                .andExpect(jsonPath("$.response.geologicalClasses[0].geologicalClassId").value(section.getGeologicalClasses().get(0).getGeologicalClassId().toString()))
+                .andExpect(jsonPath("$.response.geologicalClasses[0].name").value(section.getGeologicalClasses().get(0).getName()))
+                .andExpect(jsonPath("$.response.geologicalClasses[0].code").value(section.getGeologicalClasses().get(0).getCode()));
     }
 
+
+    @Test
+    @SneakyThrows
+    void should_report_not_found_when_section_id_not_exist() {
+        //Given
+        UUID geologicalUuid = UUID.randomUUID();
+        UUID sectionId = UUID.randomUUID();
+        GeologicalClass gc = GeologicalClass.builder().geologicalClassId(geologicalUuid).code("GC11").name("Geo Class 11").build();
+        ArrayList<GeologicalClass> geologicalClasses = new ArrayList<>() {{
+            add(gc);
+        }};
+        Section section = Section.builder().sectionId(sectionId).name("Section 1").geologicalClasses(geologicalClasses).build();
+        sectionRepository.save(section);
+
+        //When
+        String requestUrl = "http://localhost:8081" + SECTION_PATH + "/" + UUID.randomUUID();
+        MockHttpServletRequestBuilder content = get(requestUrl);
+        ResultActions response = mvc.perform(content);
+
+        //Then
+        response.andExpect(status().isOk())
+                .andExpect(jsonPath("$.statusCode").value(HttpStatus.NOT_FOUND.value()))
+                .andExpect(jsonPath("$.statusMessage").value("Can not find the section."));
+
+    }
 }

@@ -12,7 +12,7 @@ import java.util.UUID;
 @Builder
 public class GeologicalClassDto {
 
-    private UUID geologicalId;
+    private UUID geologicalClassId;
 
     @NotBlank(message = "Geological name cannot be blank or null")
     private String name;

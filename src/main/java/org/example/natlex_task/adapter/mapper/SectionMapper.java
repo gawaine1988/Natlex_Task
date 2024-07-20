@@ -18,12 +18,14 @@ public interface SectionMapper {
     @Mapping(target = "geologicalClasses", source = "geologicalClasses", qualifiedByName = "createGeologicalClasses")
     Section toModel(SectionDto sectionDto);
 
+    SectionDto toDto(Section section);
+
     @AfterMapping
-    default void setSectionIdIfNull(@MappingTarget Section section, SectionDto sectionDto) {
+    default void setSectionIdIfNull(@MappingTarget Section.SectionBuilder section, SectionDto sectionDto) {
         if (sectionDto.getSectionId() == null) {
-            section.setSectionId(generateUUID());
+            section.sectionId(generateUUID());
         } else {
-            section.setSectionId(sectionDto.getSectionId());
+            section.sectionId(sectionDto.getSectionId());
         }
     }
     default UUID generateUUID() {
