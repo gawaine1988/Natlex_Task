@@ -46,6 +46,13 @@ public class SectionController {
         }
     }
 
+    @PutMapping(consumes = APPLICATION_JSON_VALUE)
+    public ApiResponse<UUID> updateSection(@Valid @RequestBody SectionDto updateSectionRequest) {
+        Section section = sectionMapper.toModel(updateSectionRequest);
+        UUID id = sectionService.updateSection(section);
+        return ApiResponse.ok(id);
+    }
+
     private static void validateUUID(String sectionId) {
         try {
             UUID uuid = UUID.fromString(sectionId);

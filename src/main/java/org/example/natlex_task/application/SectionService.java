@@ -23,4 +23,8 @@ public class SectionService {
     public Optional<Section> findSectionBuId(UUID sectionId) {
         return sectionRepository.findById(sectionId);
     }
+
+    public UUID updateSection(Section section) {
+        return null;
+    }
 }
