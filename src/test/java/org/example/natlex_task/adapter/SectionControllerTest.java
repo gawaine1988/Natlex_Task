@@ -1,5 +1,6 @@
 package org.example.natlex_task.adapter;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
 import org.example.natlex_task.adapter.dto.GeologicalClassDto;
@@ -17,6 +18,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
@@ -70,8 +72,16 @@ class SectionControllerTest {
         ResultActions response = mvc.perform(content);
 
         //Then
-        response.andExpect(status().is2xxSuccessful())
-                .andExpect(jsonPath("$.response").value(hasLength(36)));
+        MvcResult result = response.andExpect(status().is2xxSuccessful())
+                .andExpect(jsonPath("$.response").value(hasLength(36)))
+                .andReturn();
+
+        String createResponse = result.getResponse().getContentAsString();
+        JsonNode jsonNode = mapper.readTree(createResponse);
+        String sectionId = jsonNode.path("response").asText();
+        String updatedSectionName = sectionRepository.findById(UUID.fromString(sectionId)).get().getName();
+        assertEquals(updatedSectionName, "Section 1");
+
     }
 
     private static SectionDto buildSectionDtoRequest() {
