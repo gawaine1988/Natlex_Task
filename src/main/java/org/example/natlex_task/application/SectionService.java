@@ -44,4 +44,16 @@ public class SectionService {
                     }
                 });
     }
+
+    public void delete(UUID sectionId) {
+        checkIfSectionExist(sectionId);
+        sectionRepository.deleteById(sectionId);
+    }
+
+    private void checkIfSectionExist(UUID sectionId) {
+        Optional<Section> byId = sectionRepository.findById(sectionId);
+        if(byId.isEmpty()){
+            throw new ResourceNotFoundException(String.format("Section id: %s do not exist.", sectionId));
+        }
+    }
 }

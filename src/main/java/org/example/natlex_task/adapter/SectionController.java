@@ -54,8 +54,9 @@ public class SectionController {
     }
 
     @DeleteMapping("/{sectionId}")
-    ApiResponse<UUID> deleteSectionById(@PathVariable("sectionId") String sectionId) {
+    ApiResponse<Void> deleteSectionById(@PathVariable("sectionId") String sectionId) {
         validateUUID(sectionId);
+        sectionService.delete(UUID.fromString(sectionId));
         return ApiResponse.ok();
     }
     private void validateUpdateRequest(SectionDto updateSectionRequest) {
@@ -77,7 +78,7 @@ public class SectionController {
             UUID uuid = UUID.fromString(sectionId);
             // Validate the format is correct
         } catch (IllegalArgumentException e) {
-            throw new ArgumentNotValidException("Invalid SectionId");
+            throw new ArgumentNotValidException("Invalid Section Id");
         }
     }
 }

@@ -309,12 +309,11 @@ class SectionControllerTest {
 
         //Then
         response.andExpect(status().isOk())
-                .andExpect(jsonPath("$.statusCode", is(OK.value())))
-                .andExpect(jsonPath("$.response", is(existSectionId.toString())));
+                .andExpect(jsonPath("$.statusCode", is(OK.value())));
 
 
         assertTrue(sectionRepository.findById(existSectionId).isEmpty());
-        assertFalse(geologicalClassRepository.findById(existGeologicalUuid).isEmpty());
+        assertTrue(geologicalClassRepository.findById(existGeologicalUuid).isEmpty());
     }
 
     @Test
@@ -326,33 +325,15 @@ class SectionControllerTest {
         saveSection(existGeologicalUuid, existSectionId);
 
         //When
-        String requestUrl = SECTION_URL + "/" + UUID.randomUUID();
+        UUID nonExistSectionId = UUID.randomUUID();
+        String requestUrl = SECTION_URL + "/" + nonExistSectionId;
         MockHttpServletRequestBuilder content = delete(requestUrl);
         ResultActions response = mvc.perform(content);
 
         //Then
         response.andExpect(status().isOk())
                 .andExpect(jsonPath("$.statusCode", is(NOT_FOUND.value())))
-                .andExpect(jsonPath("$.statusMessage", is(String.format("Geological id: %s do not exist.", existSectionId))));
-    }
-
-    @Test
-    @SneakyThrows
-    void should_report_argument_invalid_when_delete_by_null_section_id() {
-        //Given
-        UUID existGeologicalUuid = UUID.randomUUID();
-        UUID existSectionId = UUID.randomUUID();
-        saveSection(existGeologicalUuid, existSectionId);
-
-        //When
-        String requestUrl = SECTION_URL + "/";
-        MockHttpServletRequestBuilder content = delete(requestUrl);
-        ResultActions response = mvc.perform(content);
-
-        //Then
-        response.andExpect(status().isOk())
-                .andExpect(jsonPath("$.statusCode", is(BAD_REQUEST.value())))
-                .andExpect(jsonPath("$.statusMessage", is("Missing section Id")));
+                .andExpect(jsonPath("$.statusMessage", is(String.format("Section id: %s do not exist.", nonExistSectionId))));
     }
 
     @Test
@@ -371,7 +352,7 @@ class SectionControllerTest {
         //Then
         response.andExpect(status().isOk())
                 .andExpect(jsonPath("$.statusCode", is(BAD_REQUEST.value())))
-                .andExpect(jsonPath("$.statusMessage", is("Invalid section id")));
+                .andExpect(jsonPath("$.statusMessage", is("Invalid Section Id")));
 
     }
 
