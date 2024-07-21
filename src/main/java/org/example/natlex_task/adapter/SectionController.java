@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -57,6 +58,12 @@ public class SectionController {
     ApiResponse<Void> deleteSectionById(@PathVariable("sectionId") String sectionId) {
         validateUUID(sectionId);
         sectionService.delete(UUID.fromString(sectionId));
+        return ApiResponse.ok();
+    }
+
+
+    @GetMapping("/by-code")
+    ApiResponse<List<SectionDto>> getSectionByCode(@RequestParam(required = true) String code) {
         return ApiResponse.ok();
     }
     private void validateUpdateRequest(SectionDto updateSectionRequest) {

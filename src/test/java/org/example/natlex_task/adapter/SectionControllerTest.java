@@ -366,4 +366,90 @@ class SectionControllerTest {
 
     }
 
+    @Test
+    @SneakyThrows
+    void should_find_sections_by_code() {
+        //Given
+        UUID geologicalUuid1 = UUID.randomUUID();
+        UUID geologicalUuid2 = UUID.randomUUID();
+        UUID sectionId1 = UUID.randomUUID();
+        UUID sectionId2 = UUID.randomUUID();
+        saveSectionsWithSameGeologicalClass(geologicalUuid1, geologicalUuid2, sectionId1, sectionId2);
+
+        GeologicalClassDto gc1 = GeologicalClassDto.builder().geologicalClassId(geologicalUuid1).code("GC11").name("Geo Class 11").build();
+        GeologicalClassDto gc2 = GeologicalClassDto.builder().geologicalClassId(geologicalUuid2).code("GC22").name("Geo Class 22").build();
+        ArrayList<GeologicalClassDto> geologicalClasses = new ArrayList<>() {{
+            add(gc1);
+            add(gc2);
+        }};
+
+        SectionDto section1 = SectionDto.builder().sectionId(sectionId1).name("Section 1").geologicalClasses(geologicalClasses).build();
+        SectionDto section2 = SectionDto.builder().sectionId(sectionId2).name("Section 2").geologicalClasses(geologicalClasses).build();
+        ArrayList<SectionDto> expectedResponse = new ArrayList<>(){{
+            add(section1);
+            add(section2);
+        }};
+
+        //When
+        String requestUrl = SECTION_URL +"/by-code?code=GC11";
+        MockHttpServletRequestBuilder content = delete(requestUrl);
+        ResultActions response = mvc.perform(content);
+
+        //Then
+        response.andExpect(status().isOk())
+                .andExpect(jsonPath("$.statusCode", is(OK.value())))
+                .andExpect(jsonPath("$.response", is(expectedResponse.toString())));
+
+    }
+
+    private void saveSectionsWithSameGeologicalClass(UUID geologicalUuid1, UUID geologicalUuid2, UUID sectionId1, UUID sectionId2) {
+        GeologicalClass gc1 = GeologicalClass.builder().geologicalClassId(geologicalUuid1).code("GC11").name("Geo Class 11").build();
+        GeologicalClass gc2 = GeologicalClass.builder().geologicalClassId(geologicalUuid2).code("GC22").name("Geo Class 22").build();
+        ArrayList<GeologicalClass> geologicalClasses = new ArrayList<>() {{
+            add(gc1);
+            add(gc2);
+        }};
+
+        Section section1 = Section.builder().sectionId(sectionId1).name("Section 1").geologicalClasses(geologicalClasses).build();
+        Section section2 = Section.builder().sectionId(sectionId2).name("Section 2").geologicalClasses(geologicalClasses).build();
+        sectionRepository.save(section1);
+        sectionRepository.save(section2);
+    }
+
+    @Test
+    @SneakyThrows
+    void should_report_not_found_when_can_not_find_the_sections() {
+        //Given
+        UUID geologicalUuid1 = UUID.randomUUID();
+        UUID geologicalUuid2 = UUID.randomUUID();
+        UUID sectionId1 = UUID.randomUUID();
+        UUID sectionId2 = UUID.randomUUID();
+        saveSectionsWithSameGeologicalClass(geologicalUuid1, geologicalUuid2, sectionId1, sectionId2);
+
+        GeologicalClassDto gc1 = GeologicalClassDto.builder().geologicalClassId(geologicalUuid1).code("GC11").name("Geo Class 11").build();
+        GeologicalClassDto gc2 = GeologicalClassDto.builder().geologicalClassId(geologicalUuid2).code("GC22").name("Geo Class 22").build();
+        ArrayList<GeologicalClassDto> geologicalClasses = new ArrayList<>() {{
+            add(gc1);
+            add(gc2);
+        }};
+
+        SectionDto section1 = SectionDto.builder().sectionId(sectionId1).name("Section 1").geologicalClasses(geologicalClasses).build();
+        SectionDto section2 = SectionDto.builder().sectionId(sectionId2).name("Section 2").geologicalClasses(geologicalClasses).build();
+        ArrayList<SectionDto> expectedResponse = new ArrayList<>(){{
+            add(section1);
+            add(section2);
+        }};
+
+        //When
+        String requestUrl = SECTION_URL +"/by-code?code=GC44";
+        MockHttpServletRequestBuilder content = delete(requestUrl);
+        ResultActions response = mvc.perform(content);
+
+        //Then
+        response.andExpect(status().isOk())
+                .andExpect(jsonPath("$.statusCode", is(NOT_FOUND.value())))
+                .andExpect(jsonPath("$.response", is("Can not find section by the code")));
+
+    }
+
 }
