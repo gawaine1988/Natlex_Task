@@ -36,7 +36,7 @@ public class SectionController {
     public ApiResponse<SectionDto> getSectionById(@PathVariable("sectionId") String sectionId) {
         validateUUID(sectionId);
 
-        Optional<Section> section = sectionService.findSectionBuId(UUID.fromString(sectionId));
+        Optional<Section> section = sectionService.findSectionById(UUID.fromString(sectionId));
         if (section.isPresent()) {
             SectionDto sectionDto = sectionMapper.toDto(section.get());
             return ApiResponse.ok(sectionDto);

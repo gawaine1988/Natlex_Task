@@ -5,7 +5,6 @@ import org.example.natlex_task.application.exception.ResourceNotFoundException;
 import org.example.natlex_task.domain.model.Section;
 import org.example.natlex_task.domain.repository.GeologicalClassRepository;
 import org.example.natlex_task.domain.repository.SectionRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -22,7 +21,7 @@ public class SectionService {
         return savedSection.getSectionId();
     }
 
-    public Optional<Section> findSectionBuId(UUID sectionId) {
+    public Optional<Section> findSectionById(UUID sectionId) {
         return sectionRepository.findById(sectionId);
     }
 
