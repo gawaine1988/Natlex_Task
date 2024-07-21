@@ -18,7 +18,7 @@ import java.util.UUID;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 @RestController
-@RequestMapping(path = "/sections",  produces = APPLICATION_JSON_VALUE)
+@RequestMapping(path = "/sections", produces = APPLICATION_JSON_VALUE)
 public class SectionController {
     @Autowired
     SectionMapper sectionMapper;
@@ -34,23 +34,38 @@ public class SectionController {
     }
 
     @GetMapping("/{sectionId}")
-    public ApiResponse<SectionDto> getSectionById(@PathVariable("sectionId")  String sectionId) {
+    public ApiResponse<SectionDto> getSectionById(@PathVariable("sectionId") String sectionId) {
         validateUUID(sectionId);
 
         Optional<Section> section = sectionService.findSectionBuId(UUID.fromString(sectionId));
-        if(section.isPresent()){
+        if (section.isPresent()) {
             SectionDto sectionDto = sectionMapper.toDto(section.get());
             return ApiResponse.ok(sectionDto);
-        }else {
-            return ApiResponse.buildResponse(HttpStatus.NOT_FOUND,"Can not find the section.",null);
+        } else {
+            return ApiResponse.buildResponse(HttpStatus.NOT_FOUND, "Can not find the section.", null);
         }
     }
 
     @PutMapping(consumes = APPLICATION_JSON_VALUE)
     public ApiResponse<UUID> updateSection(@Valid @RequestBody SectionDto updateSectionRequest) {
+        validateUpdateRequest(updateSectionRequest);
         Section section = sectionMapper.toModel(updateSectionRequest);
         UUID id = sectionService.updateSection(section);
         return ApiResponse.ok(id);
+    }
+
+    private void validateUpdateRequest(SectionDto updateSectionRequest) {
+        if (updateSectionRequest.getSectionId() == null) {
+            throw new ArgumentNotValidException("Section id cannot be null when update the section");
+        }
+        updateSectionRequest.getGeologicalClasses()
+                .stream()
+                .forEach(geologicalClassDto -> {
+                    if(geologicalClassDto.getGeologicalClassId() == null){
+                        throw new ArgumentNotValidException("Geological id cannot be null when update the section");
+                    }
+                });
+
     }
 
     private static void validateUUID(String sectionId) {

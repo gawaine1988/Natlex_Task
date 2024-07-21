@@ -13,7 +13,8 @@ import java.util.stream.Collectors;
 
 @Mapper(componentModel = "spring")
 public interface SectionMapper {
-    SectionMapper sectionMapper  = Mappers.getMapper(SectionMapper.class);
+    SectionMapper sectionMapper = Mappers.getMapper(SectionMapper.class);
+
     @Mapping(target = "sectionId", ignore = true)
     @Mapping(target = "geologicalClasses", source = "geologicalClasses", qualifiedByName = "createGeologicalClasses")
     Section toModel(SectionDto sectionDto);
@@ -28,6 +29,7 @@ public interface SectionMapper {
             section.sectionId(sectionDto.getSectionId());
         }
     }
+
     default UUID generateUUID() {
         return UUID.randomUUID();
     }
@@ -46,7 +48,12 @@ public interface SectionMapper {
         GeologicalClass geologicalClass = new GeologicalClass();
         geologicalClass.setCode(geologicalClassDto.getCode());
         geologicalClass.setName(geologicalClassDto.getName());
-        geologicalClass.setGeologicalClassId(generateUUID());
+
+        if (geologicalClassDto.getGeologicalClassId() == null) {
+            geologicalClass.setGeologicalClassId(generateUUID());
+        }else {
+            geologicalClass.setGeologicalClassId(geologicalClassDto.getGeologicalClassId());
+        }
         return geologicalClass;
     }
 }

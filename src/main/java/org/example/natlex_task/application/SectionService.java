@@ -1,7 +1,9 @@
 package org.example.natlex_task.application;
 
 import lombok.RequiredArgsConstructor;
+import org.example.natlex_task.application.exception.ResourceNotFoundException;
 import org.example.natlex_task.domain.model.Section;
+import org.example.natlex_task.domain.repository.GeologicalClassRepository;
 import org.example.natlex_task.domain.repository.SectionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -13,7 +15,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class SectionService {
     private final SectionRepository sectionRepository;
-
+    private final GeologicalClassRepository geologicalClassRepository;
 
     public UUID createSection(Section section) {
         Section savedSection = sectionRepository.save(section);
@@ -25,6 +27,21 @@ public class SectionService {
     }
 
     public UUID updateSection(Section section) {
-        return null;
+        validateId(section);
+        Section updatedSection = sectionRepository.save(section);
+        return updatedSection.getSectionId();
+    }
+
+    private void validateId(Section section) {
+        sectionRepository
+                .findById(section.getSectionId())
+                .orElseThrow(()-> new ResourceNotFoundException(String.format("Section id: %s do not exist.", section.getSectionId())));
+
+        section.getGeologicalClasses()
+                .forEach(p-> {
+                    if(geologicalClassRepository.findById(p.getGeologicalClassId()).isEmpty()){
+                        throw new ResourceNotFoundException(String.format("Geological id: %s do not exist.", p.getGeologicalClassId()));
+                    }
+                });
     }
 }

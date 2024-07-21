@@ -2,6 +2,7 @@ package org.example.natlex_task.adapter.exception;
 
 
 import org.example.natlex_task.adapter.dto.ApiResponse;
+import org.example.natlex_task.application.exception.ResourceNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -24,5 +25,15 @@ public class ControllerExceptionHandler {
             errors.add(errorMessage);
         });
         return ApiResponse.buildResponse(HttpStatus.BAD_REQUEST, errors.toString(), null);
+    }
+
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ApiResponse handleValidationExceptions(ResourceNotFoundException ex) {
+        return ApiResponse.buildResponse(HttpStatus.NOT_FOUND, ex.getMessage(), null);
+    }
+
+    @ExceptionHandler(ArgumentNotValidException.class)
+    public ApiResponse handleValidationExceptions(ArgumentNotValidException ex) {
+        return ApiResponse.buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), null);
     }
 }

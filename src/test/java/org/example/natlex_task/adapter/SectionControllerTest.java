@@ -6,6 +6,7 @@ import org.example.natlex_task.adapter.dto.GeologicalClassDto;
 import org.example.natlex_task.adapter.dto.SectionDto;
 import org.example.natlex_task.domain.model.GeologicalClass;
 import org.example.natlex_task.domain.model.Section;
+import org.example.natlex_task.domain.repository.GeologicalClassRepository;
 import org.example.natlex_task.domain.repository.SectionRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,6 +24,7 @@ import java.util.ArrayList;
 import java.util.UUID;
 
 import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 import static org.springframework.http.HttpStatus.*;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
@@ -34,8 +36,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @TestPropertySource(properties = "server.port=8081")
 class SectionControllerTest {
-
-
     @Autowired
     protected MockMvc mvc;
 
@@ -44,6 +44,9 @@ class SectionControllerTest {
 
     @Autowired
     SectionRepository sectionRepository;
+
+    @Autowired
+    GeologicalClassRepository geologicalClassRepository;
 
     private static final String SECTION_URL = "http://localhost:8081/sections";
 
@@ -84,9 +87,10 @@ class SectionControllerTest {
 
     @Test
     @SneakyThrows
-    void should_response_error_when_section_name_is_blank() {
+    void should_response_error_when_post_with_blank_section_name() {
         //Given
         SectionDto sectionDtoRequest = buildSectionDtoRequest();
+        sectionDtoRequest.setName("");
         String sectionJson = mapper.writeValueAsString(sectionDtoRequest);
 
         //When
@@ -97,8 +101,6 @@ class SectionControllerTest {
         response.andExpect(status().isOk())
                 .andExpect(jsonPath("$.statusCode", is(BAD_REQUEST.value())))
                 .andExpect(jsonPath("$.statusMessage", is("[Section name cannot be blank or null]")));
-
-
     }
 
 
@@ -164,12 +166,11 @@ class SectionControllerTest {
         UUID sectionId = UUID.randomUUID();
         saveSection(geologicalUuid, sectionId);
 
-
-        GeologicalClassDto gc1 = GeologicalClassDto.builder().geologicalClassId(geologicalUuid).code("GC11").name("Geo Class 11").build();
+        GeologicalClassDto gc1 = GeologicalClassDto.builder().geologicalClassId(geologicalUuid).code("GC11").name("Geo Class 22").build();
         ArrayList<GeologicalClassDto> geologicalClasses = new ArrayList<>() {{
             add(gc1);
         }};
-        SectionDto sectionDtoRequest = SectionDto.builder().sectionId(sectionId).name("Section 1").geologicalClasses(geologicalClasses).build();
+        SectionDto sectionDtoRequest = SectionDto.builder().sectionId(sectionId).name("Section 2").geologicalClasses(geologicalClasses).build();
 
 
         String sectionJson = mapper.writeValueAsString(sectionDtoRequest);
@@ -182,13 +183,19 @@ class SectionControllerTest {
         //Then
         response.andExpect(status().isOk())
                 .andExpect(jsonPath("$.statusCode", is(OK.value())))
-                .andExpect(jsonPath("$.response.name", is("Section 2")))
-                .andExpect(jsonPath("$.response.geologicalClasses[0].name", is("Geo Class 33")));
+                .andExpect(jsonPath("$.response", is(sectionId.toString())));
+
+        String updatedSectionName = sectionRepository.findById(sectionId).get().getName();
+        assertEquals(updatedSectionName,"Section 2");
+
+        String updatedGeologicalName = geologicalClassRepository.findById(geologicalUuid).get().getName();
+        assertEquals(updatedGeologicalName,"Geo Class 22");
+
     }
 
     @Test
     @SneakyThrows
-    void should_report_error_when_section_id_is_blank() {
+    void should_report_error_when_update_with_blank_section_i() {
         //Given
         SectionDto sectionDtoRequest = buildSectionDtoRequest();
         sectionDtoRequest.setSectionId(null);
@@ -202,14 +209,14 @@ class SectionControllerTest {
         //Then
         response.andExpect(status().isOk())
                 .andExpect(jsonPath("$.statusCode", is(BAD_REQUEST.value())))
-                .andExpect(jsonPath("$.statusMessage", is("[Section id cannot be null when update the section]")));
+                .andExpect(jsonPath("$.statusMessage", is("Section id cannot be null when update the section")));
         ;
 
     }
 
     @Test
     @SneakyThrows
-    void should_report_error_when_geological_id_is_blank() {
+    void should_report_error_when_update_with_blank_geological_id() {
         //Given
         SectionDto sectionDtoRequest = buildSectionDtoRequest();
         sectionDtoRequest.setSectionId(UUID.randomUUID());
@@ -224,7 +231,7 @@ class SectionControllerTest {
         //Then
         response.andExpect(status().isOk())
                 .andExpect(jsonPath("$.statusCode", is(BAD_REQUEST.value())))
-                .andExpect(jsonPath("$.statusMessage", is("[Geological id cannot be null when update the section]")));
+                .andExpect(jsonPath("$.statusMessage", is("Geological id cannot be null when update the section")));
         ;
 
     }
@@ -255,7 +262,7 @@ class SectionControllerTest {
         //Then
         response.andExpect(status().isOk())
                 .andExpect(jsonPath("$.statusCode", is(NOT_FOUND.value())))
-                .andExpect(jsonPath("$.response.statusMessage", is(String.format("Section id: %s do not exist.", nonExistSectionId))));
+                .andExpect(jsonPath("$.statusMessage", is(String.format("Section id: %s do not exist.", nonExistSectionId))));
     }
 
     @Test
@@ -283,7 +290,7 @@ class SectionControllerTest {
         //Then
         response.andExpect(status().isOk())
                 .andExpect(jsonPath("$.statusCode", is(NOT_FOUND.value())))
-                .andExpect(jsonPath("$.response.statusMessage", is(String.format("Geological id: %s do not exist.", nonExistGeologicalUuid))));
+                .andExpect(jsonPath("$.statusMessage", is(String.format("Geological id: %s do not exist.", nonExistGeologicalUuid))));
 
     }
 
