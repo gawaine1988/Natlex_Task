@@ -11,7 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
-import javax.swing.text.html.Option;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -54,6 +53,11 @@ public class SectionController {
         return ApiResponse.ok(id);
     }
 
+    @DeleteMapping("/{sectionId}")
+    ApiResponse<UUID> deleteSectionById(@PathVariable("sectionId") String sectionId) {
+        validateUUID(sectionId);
+        return ApiResponse.ok();
+    }
     private void validateUpdateRequest(SectionDto updateSectionRequest) {
         if (updateSectionRequest.getSectionId() == null) {
             throw new ArgumentNotValidException("Section id cannot be null when update the section");

@@ -24,7 +24,7 @@ import java.util.ArrayList;
 import java.util.UUID;
 
 import static org.hamcrest.Matchers.*;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 import static org.springframework.http.HttpStatus.*;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
@@ -186,10 +186,10 @@ class SectionControllerTest {
                 .andExpect(jsonPath("$.response", is(sectionId.toString())));
 
         String updatedSectionName = sectionRepository.findById(sectionId).get().getName();
-        assertEquals(updatedSectionName,"Section 2");
+        assertEquals(updatedSectionName, "Section 2");
 
         String updatedGeologicalName = geologicalClassRepository.findById(geologicalUuid).get().getName();
-        assertEquals(updatedGeologicalName,"Geo Class 22");
+        assertEquals(updatedGeologicalName, "Geo Class 22");
 
     }
 
@@ -291,6 +291,87 @@ class SectionControllerTest {
         response.andExpect(status().isOk())
                 .andExpect(jsonPath("$.statusCode", is(NOT_FOUND.value())))
                 .andExpect(jsonPath("$.statusMessage", is(String.format("Geological id: %s do not exist.", nonExistGeologicalUuid))));
+
+    }
+
+    @Test
+    @SneakyThrows
+    void should_delete_section_and_geologicalClass_by_sectionId() {
+        //Given
+        UUID existGeologicalUuid = UUID.randomUUID();
+        UUID existSectionId = UUID.randomUUID();
+        saveSection(existGeologicalUuid, existSectionId);
+
+        //When
+        String requestUrl = SECTION_URL + "/" + existSectionId;
+        MockHttpServletRequestBuilder content = delete(requestUrl);
+        ResultActions response = mvc.perform(content);
+
+        //Then
+        response.andExpect(status().isOk())
+                .andExpect(jsonPath("$.statusCode", is(OK.value())))
+                .andExpect(jsonPath("$.response", is(existSectionId.toString())));
+
+
+        assertTrue(sectionRepository.findById(existSectionId).isEmpty());
+        assertFalse(geologicalClassRepository.findById(existGeologicalUuid).isEmpty());
+    }
+
+    @Test
+    @SneakyThrows
+    void should_report_not_found_when_delete_by_nonexist_section_id() {
+        //Given
+        UUID existGeologicalUuid = UUID.randomUUID();
+        UUID existSectionId = UUID.randomUUID();
+        saveSection(existGeologicalUuid, existSectionId);
+
+        //When
+        String requestUrl = SECTION_URL + "/" + UUID.randomUUID();
+        MockHttpServletRequestBuilder content = delete(requestUrl);
+        ResultActions response = mvc.perform(content);
+
+        //Then
+        response.andExpect(status().isOk())
+                .andExpect(jsonPath("$.statusCode", is(NOT_FOUND.value())))
+                .andExpect(jsonPath("$.statusMessage", is(String.format("Geological id: %s do not exist.", existSectionId))));
+    }
+
+    @Test
+    @SneakyThrows
+    void should_report_argument_invalid_when_delete_by_null_section_id() {
+        //Given
+        UUID existGeologicalUuid = UUID.randomUUID();
+        UUID existSectionId = UUID.randomUUID();
+        saveSection(existGeologicalUuid, existSectionId);
+
+        //When
+        String requestUrl = SECTION_URL + "/";
+        MockHttpServletRequestBuilder content = delete(requestUrl);
+        ResultActions response = mvc.perform(content);
+
+        //Then
+        response.andExpect(status().isOk())
+                .andExpect(jsonPath("$.statusCode", is(BAD_REQUEST.value())))
+                .andExpect(jsonPath("$.statusMessage", is("Missing section Id")));
+    }
+
+    @Test
+    @SneakyThrows
+    void should_report_argument_invalid_when_delete_by_invalid_section_id() {
+        //Given
+        UUID existGeologicalUuid = UUID.randomUUID();
+        UUID existSectionId = UUID.randomUUID();
+        saveSection(existGeologicalUuid, existSectionId);
+
+        //When
+        String requestUrl = SECTION_URL + "/"+"invalid uuid";
+        MockHttpServletRequestBuilder content = delete(requestUrl);
+        ResultActions response = mvc.perform(content);
+
+        //Then
+        response.andExpect(status().isOk())
+                .andExpect(jsonPath("$.statusCode", is(BAD_REQUEST.value())))
+                .andExpect(jsonPath("$.statusMessage", is("Invalid section id")));
 
     }
 
