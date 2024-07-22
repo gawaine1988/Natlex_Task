@@ -1,9 +1,6 @@
 package org.example.natlex_task.domain.model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import jdk.jfr.Enabled;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -27,4 +24,8 @@ public class GeologicalClass {
 
     private String name;
     private String code;
+
+    @ManyToOne
+    @JoinColumn(name = "section_id")
+    private Section section;
 }

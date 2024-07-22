@@ -64,8 +64,11 @@ public class SectionController {
 
     @GetMapping("/by-code")
     ApiResponse<List<SectionDto>> getSectionByCode(@RequestParam(required = true) String code) {
-        return ApiResponse.ok();
+        List<Section> sections = sectionService.findSectionByGeologicalCode(code);
+        List<SectionDto> dtoList = sectionMapper.toDtoList(sections);
+        return ApiResponse.ok(dtoList);
     }
+
     private void validateUpdateRequest(SectionDto updateSectionRequest) {
         if (updateSectionRequest.getSectionId() == null) {
             throw new ArgumentNotValidException("Section id cannot be null when update the section");
@@ -73,7 +76,7 @@ public class SectionController {
         updateSectionRequest.getGeologicalClasses()
                 .stream()
                 .forEach(geologicalClassDto -> {
-                    if(geologicalClassDto.getGeologicalClassId() == null){
+                    if (geologicalClassDto.getGeologicalClassId() == null) {
                         throw new ArgumentNotValidException("Geological id cannot be null when update the section");
                     }
                 });

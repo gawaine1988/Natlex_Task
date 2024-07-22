@@ -2,7 +2,10 @@ package org.example.natlex_task.adapter;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jayway.jsonpath.JsonPath;
+import jakarta.transaction.Transactional;
 import lombok.SneakyThrows;
+import net.minidev.json.JSONArray;
 import org.example.natlex_task.adapter.dto.GeologicalClassDto;
 import org.example.natlex_task.adapter.dto.SectionDto;
 import org.example.natlex_task.domain.model.GeologicalClass;
@@ -16,6 +19,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -24,6 +29,7 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 
 import java.util.ArrayList;
 import java.util.UUID;
+
 
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -58,9 +64,12 @@ class SectionControllerTest {
 
     @AfterEach
     void tearDown() {
+
     }
 
     @Test
+    @Transactional
+    @Rollback
     @SneakyThrows
     void should_create_section() {
         //Given
@@ -96,6 +105,8 @@ class SectionControllerTest {
     }
 
     @Test
+    @Transactional
+    @Rollback
     @SneakyThrows
     void should_response_error_when_post_with_blank_section_name() {
         //Given
@@ -115,6 +126,8 @@ class SectionControllerTest {
 
 
     @Test
+    @Transactional
+    @Rollback
     @SneakyThrows
     void should_find_section() {
         //Given
@@ -148,6 +161,8 @@ class SectionControllerTest {
 
 
     @Test
+    @Transactional
+    @Rollback
     @SneakyThrows
     void should_report_not_found_when_get_with_section_id_not_exist() {
         //Given
@@ -169,6 +184,8 @@ class SectionControllerTest {
 
 
     @Test
+    @Transactional
+    @Rollback
     @SneakyThrows
     void should_update_section_and_geologicals() {
         //Given
@@ -204,6 +221,8 @@ class SectionControllerTest {
     }
 
     @Test
+    @Transactional
+    @Rollback
     @SneakyThrows
     void should_report_error_when_update_with_blank_section_i() {
         //Given
@@ -225,6 +244,8 @@ class SectionControllerTest {
     }
 
     @Test
+    @Transactional
+    @Rollback
     @SneakyThrows
     void should_report_error_when_update_with_blank_geological_id() {
         //Given
@@ -247,6 +268,8 @@ class SectionControllerTest {
     }
 
     @Test
+    @Transactional
+    @Rollback
     @SneakyThrows
     void should_report_not_found_when_update_section_id_not_exist() {
         //Given
@@ -276,6 +299,8 @@ class SectionControllerTest {
     }
 
     @Test
+    @Transactional
+    @Rollback
     @SneakyThrows
     void should_report_not_found_when_update_geological_id_not_exist() {
         //Given
@@ -305,6 +330,8 @@ class SectionControllerTest {
     }
 
     @Test
+    @Transactional
+    @Rollback
     @SneakyThrows
     void should_delete_section_and_geologicalClass_by_sectionId() {
         //Given
@@ -327,6 +354,8 @@ class SectionControllerTest {
     }
 
     @Test
+    @Transactional
+    @Rollback
     @SneakyThrows
     void should_report_not_found_when_delete_by_nonexist_section_id() {
         //Given
@@ -347,6 +376,8 @@ class SectionControllerTest {
     }
 
     @Test
+    @Transactional
+    @Rollback
     @SneakyThrows
     void should_report_argument_invalid_when_delete_by_invalid_section_id() {
         //Given
@@ -355,7 +386,7 @@ class SectionControllerTest {
         saveSection(existGeologicalUuid, existSectionId);
 
         //When
-        String requestUrl = SECTION_URL + "/"+"invalid uuid";
+        String requestUrl = SECTION_URL + "/" + "invalid uuid";
         MockHttpServletRequestBuilder content = delete(requestUrl);
         ResultActions response = mvc.perform(content);
 
@@ -367,89 +398,97 @@ class SectionControllerTest {
     }
 
     @Test
+    @Transactional
+    @Rollback
     @SneakyThrows
     void should_find_sections_by_code() {
         //Given
         UUID geologicalUuid1 = UUID.randomUUID();
         UUID geologicalUuid2 = UUID.randomUUID();
+        UUID geologicalUuid3 = UUID.randomUUID();
         UUID sectionId1 = UUID.randomUUID();
         UUID sectionId2 = UUID.randomUUID();
-        saveSectionsWithSameGeologicalClass(geologicalUuid1, geologicalUuid2, sectionId1, sectionId2);
+        saveSectionsWithSameGeologicalClass(geologicalUuid1, geologicalUuid2, geologicalUuid3, sectionId1, sectionId2);
 
         GeologicalClassDto gc1 = GeologicalClassDto.builder().geologicalClassId(geologicalUuid1).code("GC11").name("Geo Class 11").build();
         GeologicalClassDto gc2 = GeologicalClassDto.builder().geologicalClassId(geologicalUuid2).code("GC22").name("Geo Class 22").build();
-        ArrayList<GeologicalClassDto> geologicalClasses = new ArrayList<>() {{
+        GeologicalClassDto gc3WithSameCode = GeologicalClassDto.builder().geologicalClassId(geologicalUuid3).code("GC22").name("Geo Class 33").build();
+        ArrayList<GeologicalClassDto> geologicalClasses1 = new ArrayList<>() {{
             add(gc1);
             add(gc2);
         }};
 
-        SectionDto section1 = SectionDto.builder().sectionId(sectionId1).name("Section 1").geologicalClasses(geologicalClasses).build();
-        SectionDto section2 = SectionDto.builder().sectionId(sectionId2).name("Section 2").geologicalClasses(geologicalClasses).build();
-        ArrayList<SectionDto> expectedResponse = new ArrayList<>(){{
+        ArrayList<GeologicalClassDto> geologicalClasses2 = new ArrayList<>() {{
+            add(gc3WithSameCode);
+        }};
+
+        SectionDto section1 = SectionDto.builder().sectionId(sectionId1).name("Section 1").geologicalClasses(geologicalClasses1).build();
+        SectionDto section2 = SectionDto.builder().sectionId(sectionId2).name("Section 2").geologicalClasses(geologicalClasses2).build();
+        ArrayList<SectionDto> sectionDtos = new ArrayList<>() {{
             add(section1);
             add(section2);
         }};
+        String expectResponse = mapper.writeValueAsString(sectionDtos);
 
         //When
-        String requestUrl = SECTION_URL +"/by-code?code=GC11";
-        MockHttpServletRequestBuilder content = delete(requestUrl);
+        String requestUrl = SECTION_URL + "/by-code?code=GC22";
+        MockHttpServletRequestBuilder content = get(requestUrl);
         ResultActions response = mvc.perform(content);
 
         //Then
-        response.andExpect(status().isOk())
+        String contentAsString = response.andExpect(status().isOk())
                 .andExpect(jsonPath("$.statusCode", is(OK.value())))
-                .andExpect(jsonPath("$.response", is(expectedResponse.toString())));
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        JSONArray responseJsonArray = JsonPath.parse(contentAsString).read("$.response", JSONArray.class);
+
+        assertEquals(expectResponse, responseJsonArray.toJSONString());
 
     }
 
-    private void saveSectionsWithSameGeologicalClass(UUID geologicalUuid1, UUID geologicalUuid2, UUID sectionId1, UUID sectionId2) {
+    private void saveSectionsWithSameGeologicalClass(UUID geologicalUuid1, UUID geologicalUuid2, UUID geologicalUuid3, UUID sectionId1, UUID sectionId2) {
         GeologicalClass gc1 = GeologicalClass.builder().geologicalClassId(geologicalUuid1).code("GC11").name("Geo Class 11").build();
         GeologicalClass gc2 = GeologicalClass.builder().geologicalClassId(geologicalUuid2).code("GC22").name("Geo Class 22").build();
-        ArrayList<GeologicalClass> geologicalClasses = new ArrayList<>() {{
+        GeologicalClass gc3WithSameCode = GeologicalClass.builder().geologicalClassId(geologicalUuid3).code("GC22").name("Geo Class 33").build();
+        ArrayList<GeologicalClass> geologicalClasses1 = new ArrayList<>() {{
             add(gc1);
             add(gc2);
         }};
 
-        Section section1 = Section.builder().sectionId(sectionId1).name("Section 1").geologicalClasses(geologicalClasses).build();
-        Section section2 = Section.builder().sectionId(sectionId2).name("Section 2").geologicalClasses(geologicalClasses).build();
+        ArrayList<GeologicalClass> geologicalClasses2 = new ArrayList<>() {{
+            add(gc3WithSameCode);
+        }};
+
+        Section section1 = Section.builder().sectionId(sectionId1).name("Section 1").geologicalClasses(geologicalClasses1).build();
+        Section section2 = Section.builder().sectionId(sectionId2).name("Section 2").geologicalClasses(geologicalClasses2).build();
         sectionRepository.save(section1);
         sectionRepository.save(section2);
     }
 
     @Test
+    @Transactional
+    @Rollback
     @SneakyThrows
     void should_report_not_found_when_can_not_find_the_sections() {
         //Given
         UUID geologicalUuid1 = UUID.randomUUID();
         UUID geologicalUuid2 = UUID.randomUUID();
+        UUID geologicalUuid3 = UUID.randomUUID();
         UUID sectionId1 = UUID.randomUUID();
         UUID sectionId2 = UUID.randomUUID();
-        saveSectionsWithSameGeologicalClass(geologicalUuid1, geologicalUuid2, sectionId1, sectionId2);
-
-        GeologicalClassDto gc1 = GeologicalClassDto.builder().geologicalClassId(geologicalUuid1).code("GC11").name("Geo Class 11").build();
-        GeologicalClassDto gc2 = GeologicalClassDto.builder().geologicalClassId(geologicalUuid2).code("GC22").name("Geo Class 22").build();
-        ArrayList<GeologicalClassDto> geologicalClasses = new ArrayList<>() {{
-            add(gc1);
-            add(gc2);
-        }};
-
-        SectionDto section1 = SectionDto.builder().sectionId(sectionId1).name("Section 1").geologicalClasses(geologicalClasses).build();
-        SectionDto section2 = SectionDto.builder().sectionId(sectionId2).name("Section 2").geologicalClasses(geologicalClasses).build();
-        ArrayList<SectionDto> expectedResponse = new ArrayList<>(){{
-            add(section1);
-            add(section2);
-        }};
+        saveSectionsWithSameGeologicalClass(geologicalUuid1, geologicalUuid2, geologicalUuid3, sectionId1, sectionId2);
 
         //When
-        String requestUrl = SECTION_URL +"/by-code?code=GC44";
-        MockHttpServletRequestBuilder content = delete(requestUrl);
+        String requestUrl = SECTION_URL + "/by-code?code=GC55";
+        MockHttpServletRequestBuilder content = get(requestUrl);
         ResultActions response = mvc.perform(content);
 
         //Then
         response.andExpect(status().isOk())
                 .andExpect(jsonPath("$.statusCode", is(NOT_FOUND.value())))
-                .andExpect(jsonPath("$.response", is("Can not find section by the code")));
-
+                .andExpect(jsonPath("$.statusMessage", is("Can not find section by the code")));
     }
 
 }

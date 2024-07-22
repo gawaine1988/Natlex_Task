@@ -27,6 +27,5 @@ public class Section {
     private String name;
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
-    @JoinColumn(name = "section_id")
     private List<GeologicalClass> geologicalClasses;
 }

@@ -7,6 +7,7 @@ import org.example.natlex_task.domain.repository.GeologicalClassRepository;
 import org.example.natlex_task.domain.repository.SectionRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -34,11 +35,11 @@ public class SectionService {
     private void validateId(Section section) {
         sectionRepository
                 .findById(section.getSectionId())
-                .orElseThrow(()-> new ResourceNotFoundException(String.format("Section id: %s do not exist.", section.getSectionId())));
+                .orElseThrow(() -> new ResourceNotFoundException(String.format("Section id: %s do not exist.", section.getSectionId())));
 
         section.getGeologicalClasses()
-                .forEach(p-> {
-                    if(geologicalClassRepository.findById(p.getGeologicalClassId()).isEmpty()){
+                .forEach(p -> {
+                    if (geologicalClassRepository.findById(p.getGeologicalClassId()).isEmpty()) {
                         throw new ResourceNotFoundException(String.format("Geological id: %s do not exist.", p.getGeologicalClassId()));
                     }
                 });
@@ -51,8 +52,18 @@ public class SectionService {
 
     private void checkIfSectionExist(UUID sectionId) {
         Optional<Section> byId = sectionRepository.findById(sectionId);
-        if(byId.isEmpty()){
+        if (byId.isEmpty()) {
             throw new ResourceNotFoundException(String.format("Section id: %s do not exist.", sectionId));
         }
+    }
+
+    public List<Section> findSectionByGeologicalCode(String code) {
+        List<Section> sectionsByGeologicalClassCode = sectionRepository.findSectionsByGeologicalClassCode(code);
+
+        if (sectionsByGeologicalClassCode.isEmpty()) {
+            throw new ResourceNotFoundException("Can not find section by the code");
+        }
+
+        return sectionsByGeologicalClassCode;
     }
 }

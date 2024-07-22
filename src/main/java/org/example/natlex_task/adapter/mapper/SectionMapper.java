@@ -21,6 +21,8 @@ public interface SectionMapper {
 
     SectionDto toDto(Section section);
 
+    List<SectionDto> toDtoList(List<Section> sections);
+
     @AfterMapping
     default void setSectionIdIfNull(@MappingTarget Section.SectionBuilder section, SectionDto sectionDto) {
         if (sectionDto.getSectionId() == null) {
