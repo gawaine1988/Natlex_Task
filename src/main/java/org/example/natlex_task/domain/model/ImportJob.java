@@ -2,7 +2,6 @@ package org.example.natlex_task.domain.model;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.example.natlex_task.domain.model.GeologicalClass;
 import org.hibernate.annotations.JdbcTypeCode;
 
 import java.util.List;
@@ -16,20 +15,18 @@ import static java.sql.Types.VARCHAR;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "sections")
+@Table(name = "import_jobs")
 @EqualsAndHashCode
-public class Section {
+public class ImportJob {
     @Id
-    @Column(name = "section_id", updatable = false, nullable = false, columnDefinition = "VARCHAR(36)")
+    @Column(name = "job_id", updatable = false, nullable = false, columnDefinition = "VARCHAR(36)")
     @JdbcTypeCode(value = VARCHAR)
-    private UUID sectionId;
+    private UUID jobId;
 
-    private String name;
+    private JobStatus jobStatus;
 
-    @ManyToOne
-    @JoinColumn(name = "job_id")
-    private ImportJob importJob;
+    private String errorMessage;
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<GeologicalClass> geologicalClasses;
+    private List<Section> sections;
 }

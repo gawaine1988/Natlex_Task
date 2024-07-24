@@ -2,8 +2,11 @@ package org.example.natlex_task.adapter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
+import org.example.natlex_task.domain.model.ImportJob;
+import org.example.natlex_task.domain.model.JobStatus;
 import org.example.natlex_task.domain.model.Section;
 import org.example.natlex_task.domain.repository.GeologicalClassRepository;
+import org.example.natlex_task.domain.repository.ImportJobRepository;
 import org.example.natlex_task.domain.repository.SectionRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,7 +24,9 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
+import static org.hamcrest.Matchers.hasLength;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -44,10 +49,14 @@ class FileControllerTest {
     private MockMultipartFile mockFile;
 
     @Autowired
+    ImportJobRepository importJobRepository;
+
+    @Autowired
     SectionRepository sectionRepository;
 
     @Autowired
     GeologicalClassRepository geologicalClassRepository;
+
     @BeforeEach
     void setUp() {
     }
@@ -60,7 +69,6 @@ class FileControllerTest {
     @SneakyThrows
     void should_create_job_and_import_file() {
         //Given
-        UUID jobId = UUID.randomUUID();
         byte[] content = Files.readAllBytes(Paths.get("src/test/resources/testfile.xlsx"));
         mockFile = new MockMultipartFile("file", "testfile.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", content);
 
@@ -70,109 +78,44 @@ class FileControllerTest {
 
         //Then
         response.andExpect(status().isOk())
-                .andExpect(content().string(jobId.toString()));
+                .andExpect(jsonPath("$.response").value(hasLength(36)));
+        TimeUnit.SECONDS.sleep(1);
+        List<ImportJob> all = importJobRepository.findAll();
+        assertEquals(1, all.size());
+        assertEquals(JobStatus.DONE, all.get(0).getJobStatus());
 
-        List<Section> all = sectionRepository.findAll();
-        assertEquals(all.size(),4);
+        List<Section> sections = sectionRepository.findAll();
+        assertEquals(3, sections.size());
+        assertEquals("Section 1", sections.get(0).getName());
+        assertEquals(2, sections.get(0).getGeologicalClasses().size());
+        assertEquals("Geo Class 11", sections.get(0).getGeologicalClasses().get(0).getName());
+        assertEquals("GC11", sections.get(0).getGeologicalClasses().get(0).getCode());
+        assertEquals("Section 3", sections.get(2).getName());
+        assertEquals(1, sections.get(2).getGeologicalClasses().size());
+        assertEquals("Geo Class 32", sections.get(2).getGeologicalClasses().get(0).getName());
+        assertEquals("GC32", sections.get(2).getGeologicalClasses().get(0).getCode());
     }
 
     @Test
     @SneakyThrows
-    void should_report_error_when_missing_header() {
+    void should_report_error_when_missing_file_header() {
         //Given
-        byte[] missingALlHeaderContent = Files.readAllBytes(Paths.get("src/test/resources/test_missing_all_header_file.xlsx"));
-        byte[] missingClassNameHeaderContent = Files.readAllBytes(Paths.get("src/test/resources/test_missing_class_name_header_file.xlsx"));
-        byte[] missingClassCodeHeaderContent = Files.readAllBytes(Paths.get("src/test/resources/test_missing_class_code_header_file.xlsx"));
-        byte[] missingClassCodeAndHeaderContent = Files.readAllBytes(Paths.get("src/test/resources/test_missing_class_code_and_header_file.xlsx"));
-        byte[] missingSectionNameHeaderContent = Files.readAllBytes(Paths.get("src/test/resources/test_missing_section_name_header_file.xlsx"));
-
+        byte[] content = Files.readAllBytes(Paths.get("src/test/resources/test_missing_all_header_file.xlsx"));
+        mockFile = new MockMultipartFile("file", "testfile.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", content);
 
         //When
-        mockFile = new MockMultipartFile("file", "test_missing_all_header_file.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", missingALlHeaderContent);
-        ResultActions missingAllHeaderResponse = mvc.perform(MockMvcRequestBuilders.multipart("/import")
-                .file(mockFile));
 
-        mockFile = new MockMultipartFile("file", "test_missing_class_name_header_file.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", missingClassNameHeaderContent);
-        ResultActions missingClassNameHeaderResponse = mvc.perform(MockMvcRequestBuilders.multipart("/import")
-                .file(mockFile));
-
-        mockFile = new MockMultipartFile("file", "test_missing_class_code_header_file.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", missingClassCodeHeaderContent);
-        ResultActions missingClassCodeHeaderResponse = mvc.perform(MockMvcRequestBuilders.multipart("/import")
-                .file(mockFile));
-
-        mockFile = new MockMultipartFile("file", "test_missing_class_name_and_code_header_file.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", missingClassCodeAndHeaderContent);
-        ResultActions missingClassCodeAndNameHeaderResponse = mvc.perform(MockMvcRequestBuilders.multipart("/import")
-                .file(mockFile));
-
-
-        mockFile = new MockMultipartFile("file", "test_missing_section_name_header_file.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", missingSectionNameHeaderContent);
-        ResultActions missingSectionNameHeaderResponse = mvc.perform(MockMvcRequestBuilders.multipart("/import")
-                .file(mockFile));
-
-
-
-
-        //Then
-        missingAllHeaderResponse.andExpect(status().isOk())
-                .andExpect(jsonPath("$.statusCode", is(BAD_REQUEST.value())))
-                .andExpect(jsonPath("$.statusMessage", is("The header should contain section name, class name and class code")));
-
-        missingClassNameHeaderResponse.andExpect(status().isOk())
-                .andExpect(jsonPath("$.statusCode", is(BAD_REQUEST.value())))
-                .andExpect(jsonPath("$.statusMessage", is("The header should contain section name, class name and class code")));
-
-        missingClassCodeHeaderResponse.andExpect(status().isOk())
-                .andExpect(jsonPath("$.statusCode", is(BAD_REQUEST.value())))
-                .andExpect(jsonPath("$.statusMessage", is("The header should contain section name, class name and class code")));
-
-        missingClassCodeAndNameHeaderResponse.andExpect(status().isOk())
-                .andExpect(jsonPath("$.statusCode", is(BAD_REQUEST.value())))
-                .andExpect(jsonPath("$.statusMessage", is("The header should contain section name, class name and class code")));
-
-        missingSectionNameHeaderResponse.andExpect(status().isOk())
-                .andExpect(jsonPath("$.statusCode", is(BAD_REQUEST.value())))
-                .andExpect(jsonPath("$.statusMessage", is("The header should contain section name, class name and class code")));
-
-    }
-
-    @Test
-    @SneakyThrows
-    void should_report_error_when_header_name_incorrect() {
-        //Given
-        byte[] incorrectSectionNameContent = Files.readAllBytes(Paths.get("src/test/resources/testfile_section_name_header_incorrect.xlsx"));
-        byte[] incorrectClassNameContent = Files.readAllBytes(Paths.get("src/test/resources/testfile_class_name_header_incorrect.xlsx"));
-        byte[] incorrectClassCodeContent = Files.readAllBytes(Paths.get("src/test/resources/testfile_class_code_header_incorrect.xlsx"));
-
-
-        //When
-        mockFile = new MockMultipartFile("file", "testfile_section_name_header_incorrect.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", incorrectSectionNameContent);
-        ResultActions incorrectSectionNameResponse = mvc.perform(MockMvcRequestBuilders.multipart("/import")
-                .file(mockFile));
-
-        mockFile = new MockMultipartFile("file", "testfile_class_name_header_incorrect.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", incorrectClassNameContent);
-        ResultActions incorrectClassNameResponse = mvc.perform(MockMvcRequestBuilders.multipart("/import")
-                .file(mockFile));
-
-        mockFile = new MockMultipartFile("file", "testfile_class_code_header_incorrect.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", incorrectClassCodeContent);
-        ResultActions incorrectClassCodeResponse = mvc.perform(MockMvcRequestBuilders.multipart("/import")
+        ResultActions response = mvc.perform(MockMvcRequestBuilders.multipart("/import")
                 .file(mockFile));
 
         //Then
-        incorrectSectionNameResponse.andExpect(status().isOk())
-                .andExpect(jsonPath("$.statusCode", is(BAD_REQUEST.value())))
-                .andExpect(jsonPath("$.statusMessage", is("The header is incorrect")));
-
-        incorrectClassNameResponse.andExpect(status().isOk())
-                .andExpect(jsonPath("$.statusCode", is(BAD_REQUEST.value())))
-                .andExpect(jsonPath("$.statusMessage", is("The header is incorrect")));
-
-
-        incorrectClassCodeResponse.andExpect(status().isOk())
-                .andExpect(jsonPath("$.statusCode", is(BAD_REQUEST.value())))
-                .andExpect(jsonPath("$.statusMessage", is("The header is incorrect")));
-
+        response.andExpect(status().isOk())
+                .andExpect(jsonPath("$.response").value(hasLength(36)));
+        TimeUnit.SECONDS.sleep(1);
+        List<ImportJob> all = importJobRepository.findAll();
+        assertEquals(1, all.size());
+        assertEquals(JobStatus.ERROR, all.get(0).getJobStatus());
+        assertEquals("The file do not have header.", all.get(0).getErrorMessage());
     }
-
-
 
 }
