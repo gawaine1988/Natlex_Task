@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import static org.example.natlex_task.adapter.utils.Utils.validateUUID;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 @RestController
@@ -83,12 +84,5 @@ public class SectionController {
 
     }
 
-    private static void validateUUID(String sectionId) {
-        try {
-            UUID uuid = UUID.fromString(sectionId);
-            // Validate the format is correct
-        } catch (IllegalArgumentException e) {
-            throw new ArgumentNotValidException("Invalid Section Id");
-        }
-    }
+
 }

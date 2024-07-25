@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.util.Strings;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.example.natlex_task.application.exception.ResourceNotFoundException;
 import org.example.natlex_task.domain.model.GeologicalClass;
 import org.example.natlex_task.domain.model.ImportJob;
 import org.example.natlex_task.domain.model.JobStatus;
@@ -15,6 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.regex.Pattern;
 import java.util.ArrayList;
@@ -170,5 +172,13 @@ public class ImportService {
             return false;
         }
         return true;
+    }
+
+    public ImportJob findJobById(UUID uuid) {
+        Optional<ImportJob> importJob = importJobRepository.findById(uuid);
+        if(importJob.isEmpty()){
+            throw new ResourceNotFoundException(String.format("Can not find the job by id: %s", uuid));
+        }
+        return importJob.get();
     }
 }

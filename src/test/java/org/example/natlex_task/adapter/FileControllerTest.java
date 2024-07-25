@@ -1,8 +1,11 @@
 package org.example.natlex_task.adapter;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jayway.jsonpath.JsonPath;
 import jakarta.transaction.Transactional;
 import lombok.SneakyThrows;
+import net.minidev.json.JSONArray;
 import org.example.natlex_task.domain.model.ImportJob;
 import org.example.natlex_task.domain.model.JobStatus;
 import org.example.natlex_task.domain.model.Section;
@@ -15,21 +18,25 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.Matchers.hasLength;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -119,4 +126,52 @@ class FileControllerTest {
         assertEquals("The file do not have header.", all.get(0).getErrorMessage());
     }
 
+    @Test
+    @Transactional
+    @Rollback
+    @SneakyThrows
+    void should_get_job_by_id() {
+        // Given
+        UUID importedJobId = UUID.randomUUID();
+        ImportJob importedJob = ImportJob.builder()
+                .jobId(importedJobId)
+                .jobStatus(JobStatus.DONE)
+                .build();
+        importJobRepository.save(importedJob);
+
+        // When
+        String requestUrl = "/import/" + importedJobId;
+        MockHttpServletRequestBuilder content = get(requestUrl);
+        ResultActions response = mvc.perform(content);
+
+        // Then
+        response.andExpect(status().isOk())
+                .andExpect(jsonPath("$.statusCode").value(HttpStatus.OK.value()))
+                .andExpect(jsonPath("$.response.jobId").value(importedJobId.toString()));
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    @SneakyThrows
+    void should_report_not_found_When_id_not_exist() {
+        // Given
+        UUID importedJobId = UUID.randomUUID();
+        UUID notExistJobId = UUID.randomUUID();
+        ImportJob importedJob = ImportJob.builder()
+                .jobId(importedJobId)
+                .jobStatus(JobStatus.DONE)
+                .build();
+        importJobRepository.save(importedJob);
+
+        // When
+        String requestUrl = "/import/" + notExistJobId;
+        MockHttpServletRequestBuilder content = get(requestUrl);
+        ResultActions response = mvc.perform(content);
+
+        // Then
+        response.andExpect(status().isOk())
+                .andExpect(jsonPath("$.statusCode").value(HttpStatus.NOT_FOUND.value()))
+                .andExpect(jsonPath("$.statusMessage").value(String.format("Can not find the job by id: %s", notExistJobId)));
+    }
 }
