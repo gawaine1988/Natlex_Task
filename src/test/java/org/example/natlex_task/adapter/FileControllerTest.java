@@ -2,13 +2,13 @@ package org.example.natlex_task.adapter;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jayway.jsonpath.JsonPath;
 import jakarta.transaction.Transactional;
 import lombok.SneakyThrows;
-import net.minidev.json.JSONArray;
+import org.example.natlex_task.domain.model.ExportJob;
 import org.example.natlex_task.domain.model.ImportJob;
 import org.example.natlex_task.domain.model.JobStatus;
 import org.example.natlex_task.domain.model.Section;
+import org.example.natlex_task.domain.repository.ExportJobRepository;
 import org.example.natlex_task.domain.repository.GeologicalClassRepository;
 import org.example.natlex_task.domain.repository.ImportJobRepository;
 import org.example.natlex_task.domain.repository.SectionRepository;
@@ -54,6 +54,9 @@ class FileControllerTest {
 
     @Autowired
     ImportJobRepository importJobRepository;
+
+    @Autowired
+    ExportJobRepository exportJobRepository;
 
     @Autowired
     SectionRepository sectionRepository;
@@ -173,5 +176,34 @@ class FileControllerTest {
         response.andExpect(status().isOk())
                 .andExpect(jsonPath("$.statusCode").value(HttpStatus.NOT_FOUND.value()))
                 .andExpect(jsonPath("$.statusMessage").value(String.format("Can not find the job by id: %s", notExistJobId)));
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    @SneakyThrows
+    void should_create_export_job_and_return_job_id() {
+
+        // When
+        String requestUrl = "/export";
+        MockHttpServletRequestBuilder content = get(requestUrl);
+        ResultActions response = mvc.perform(content);
+
+        // Then
+        String exportResponse = response.andExpect(status().isOk())
+                .andExpect(jsonPath("$.statusCode").value(HttpStatus.OK.value()))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+
+        JsonNode jsonNode = mapper.readTree(exportResponse);
+        String sectionId = jsonNode.path("response").asText();
+
+        TimeUnit.SECONDS.sleep(1);
+        List<ExportJob> all = exportJobRepository.findAll();
+        assertEquals(1, all.size());
+        assertEquals(JobStatus.DONE, all.get(0).getJobStatus());
+        assertEquals(sectionId, all.get(0).getJobId());
     }
 }

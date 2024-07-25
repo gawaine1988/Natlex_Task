@@ -31,4 +31,10 @@ public class FileController {
         return ApiResponse.ok(importJob);
     }
 
+    @GetMapping("/export")
+    public ApiResponse<UUID> getExportId() {
+        UUID exportId = fileService.exportFile();
+        return ApiResponse.ok(exportId);
+    }
+
 }
