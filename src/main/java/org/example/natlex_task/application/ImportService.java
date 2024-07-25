@@ -158,6 +158,9 @@ public class ImportService {
                 if (i < headerRow.getLastCellNum() - 1) {
                     headerString.append(", ");
                 }
+            }else {
+                setErrorStatus(importJob, "The file header is missing.");
+                return false;
             }
         }
 
