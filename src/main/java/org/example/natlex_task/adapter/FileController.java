@@ -1,8 +1,7 @@
 package org.example.natlex_task.adapter;
 
 import org.example.natlex_task.adapter.dto.ApiResponse;
-import org.example.natlex_task.adapter.dto.SectionDto;
-import org.example.natlex_task.application.ImportService;
+import org.example.natlex_task.application.FileService;
 import org.example.natlex_task.domain.model.ImportJob;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -14,21 +13,21 @@ import static org.example.natlex_task.adapter.utils.Utils.validateUUID;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 @RestController
-@RequestMapping(path = "/import", produces = APPLICATION_JSON_VALUE)
+@RequestMapping( produces = APPLICATION_JSON_VALUE)
 public class FileController {
     @Autowired
-    ImportService importService;
+    FileService fileService;
 
-    @PostMapping
+    @PostMapping("/import")
     public ApiResponse<UUID> importFile(@RequestParam("file") MultipartFile file) {
-        UUID jobId = importService.importFile(file);
+        UUID jobId = fileService.importFile(file);
         return ApiResponse.ok(jobId);
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/import/{id}")
     public ApiResponse<ImportJob> getSectionById(@PathVariable("id") String id) {
         validateUUID(id);
-        ImportJob importJob = importService.findJobById(UUID.fromString(id));
+        ImportJob importJob = fileService.findJobById(UUID.fromString(id));
         return ApiResponse.ok(importJob);
     }
 

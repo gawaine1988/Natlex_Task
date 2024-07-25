@@ -30,7 +30,7 @@ class ImportServiceTest {
     private ImportJobRepository importJobRepository;
 
     @InjectMocks
-    private ImportService importService;
+    private FileService importService;
 
     @BeforeEach
     void setUp() {

@@ -23,7 +23,7 @@ import java.util.ArrayList;
 
 @Service
 @RequiredArgsConstructor
-public class ImportService {
+public class FileService {
 
     private final ImportJobRepository importJobRepository;
     private static final Pattern HEADER_PATTERN = Pattern.compile(
