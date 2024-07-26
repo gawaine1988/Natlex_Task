@@ -15,6 +15,7 @@ import static java.sql.Types.VARCHAR;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
+@EqualsAndHashCode
 @Table(name = "geological_class")
 public class GeologicalClass {
     @Id

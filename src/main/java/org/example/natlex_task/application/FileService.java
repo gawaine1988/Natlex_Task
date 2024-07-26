@@ -231,9 +231,10 @@ public class FileService {
         headerRow.createCell(0).setCellValue("Section name");
 
         if (max.isPresent()) {
-            for (int i = 0; i < max.get(); i += 2) {
-                headerRow.createCell(i + 1).setCellValue(String.format("Class %d code", i + 1));
-                headerRow.createCell(i + 2).setCellValue(String.format("Class %d name", i + 2));
+            int geologicalStartColumn = 1;
+            for (int i = 0; i < max.get(); i++) {
+                headerRow.createCell(geologicalStartColumn++).setCellValue(String.format("Class %d code", i + 1));
+                headerRow.createCell(geologicalStartColumn++).setCellValue(String.format("Class %d name", i + 2));
             }
         }
     }
@@ -243,10 +244,11 @@ public class FileService {
         // Add code to write geological classes
         List<GeologicalClass> geologicalClasses = section.getGeologicalClasses();
 
-        for (int i = 0; i < geologicalClasses.size(); i += 2) {
+        int geologicalRowNumber = 1;
+        for (int i = 0; i < geologicalClasses.size(); i++) {
             GeologicalClass geologicalClass = geologicalClasses.get(i);
-            row.createCell(i + 1).setCellValue(geologicalClass.getCode());
-            row.createCell(i + 2).setCellValue(geologicalClass.getName());
+            row.createCell(geologicalRowNumber++).setCellValue(geologicalClass.getCode());
+            row.createCell(geologicalRowNumber++).setCellValue(geologicalClass.getName());
         }
     }
 

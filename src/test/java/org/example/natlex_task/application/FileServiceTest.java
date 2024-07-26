@@ -1,29 +1,34 @@
 package org.example.natlex_task.application;
 
 import lombok.SneakyThrows;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.example.natlex_task.domain.model.*;
 import org.example.natlex_task.domain.repository.ExportJobRepository;
+import org.example.natlex_task.domain.repository.ImportJobRepository;
 import org.example.natlex_task.domain.repository.SectionRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
 import org.mockito.InjectMocks;
-
-import org.example.natlex_task.domain.repository.ImportJobRepository;
+import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
-import sun.misc.Unsafe;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
 
@@ -44,6 +49,7 @@ class FileServiceTest {
 
     @InjectMocks
     private FileService fileService;
+
 
     @BeforeEach
     void setUp() {
@@ -268,7 +274,7 @@ class FileServiceTest {
 
     @Test
     @SneakyThrows
-    public void shouldExportFile() {
+    public void should_export_correct_file() {
         // Given
         GeologicalClass gc1 = GeologicalClass.builder().geologicalClassId(UUID.randomUUID()).code("GC11").name("Geo Class 11").build();
         GeologicalClass gc2 = GeologicalClass.builder().geologicalClassId(UUID.randomUUID()).code("GC22").name("Geo Class 22").build();
@@ -285,7 +291,7 @@ class FileServiceTest {
         Section section1 = Section.builder().sectionId(UUID.randomUUID()).name("Section 1").geologicalClasses(geologicalClasses1).build();
         Section section2 = Section.builder().sectionId(UUID.randomUUID()).name("Section 2").geologicalClasses(geologicalClasses2).build();
 
-        List<Section> savedSections = new ArrayList<>(){{
+        List<Section> savedSections = new ArrayList<>() {{
             add(section1);
             add(section2);
         }};
@@ -303,7 +309,76 @@ class FileServiceTest {
         ExportJob exportJob = exportJobCaptor.getValue();
         assertEquals(jobId, exportJob.getJobId());
         assertEquals(JobStatus.DONE, exportJob.getJobStatus());
-        assertTrue(Files.exists(Paths.get(EXPORT_FILE_PAH+jobId+".xlsx")));
 
+        assertTrue(Files.exists(Paths.get(EXPORT_FILE_PAH + jobId + ".xlsx")));
+
+        boolean result = areExcelFilesEqual("src/test/resources/correct_export_file.xlsx", EXPORT_FILE_PAH + jobId + ".xlsx");
+        assertTrue(result, "The Excel files are not the same!");
     }
+
+    private boolean areExcelFilesEqual(String filePath1, String filePath2) throws IOException {
+
+        try (FileInputStream file1 = new FileInputStream(filePath1);
+             FileInputStream file2 = new FileInputStream(filePath2);
+             Workbook workbook1 = new XSSFWorkbook(file1);
+             Workbook workbook2 = new XSSFWorkbook(file2)) {
+
+            if (workbook1.getNumberOfSheets() != workbook2.getNumberOfSheets()) {
+                return false;
+            }
+
+            Sheet sheet1 = workbook1.getSheetAt(0);
+            Sheet sheet2 = workbook2.getSheetAt(0);
+            if (!areSheetsEqual(sheet1, sheet2)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean areSheetsEqual(Sheet sheet1, Sheet sheet2) {
+        if (sheet1.getPhysicalNumberOfRows() != sheet2.getPhysicalNumberOfRows()) {
+            return false;
+        }
+
+        Iterator<Row> rowIterator1 = sheet1.iterator();
+        Iterator<Row> rowIterator2 = sheet2.iterator();
+
+        while (rowIterator1.hasNext() && rowIterator2.hasNext()) {
+            Row row1 = rowIterator1.next();
+            Row row2 = rowIterator2.next();
+
+            if (!areRowsEqual(row1, row2)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean areRowsEqual(Row row1, Row row2) {
+        if (row1.getPhysicalNumberOfCells() != row2.getPhysicalNumberOfCells()) {
+            return false;
+        }
+
+        Iterator<Cell> cellIterator1 = row1.iterator();
+        Iterator<Cell> cellIterator2 = row2.iterator();
+
+        while (cellIterator1.hasNext() && cellIterator2.hasNext()) {
+            Cell cell1 = cellIterator1.next();
+            Cell cell2 = cellIterator2.next();
+
+            if (!areCellsEqual(cell1, cell2)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static boolean areCellsEqual(Cell cell1, Cell cell2) {
+        if (cell1.getCellType() != cell2.getCellType()) {
+            return false;
+        }
+        return cell1.getStringCellValue().equals(cell2.getStringCellValue());
+    }
+
 }
