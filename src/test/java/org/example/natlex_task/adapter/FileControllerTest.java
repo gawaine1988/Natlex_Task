@@ -133,7 +133,7 @@ class FileControllerTest {
     @Transactional
     @Rollback
     @SneakyThrows
-    void should_get_job_by_id() {
+    void should_get_import_job_by_id() {
         // Given
         UUID importedJobId = UUID.randomUUID();
         ImportJob importedJob = ImportJob.builder()
@@ -157,7 +157,7 @@ class FileControllerTest {
     @Transactional
     @Rollback
     @SneakyThrows
-    void should_report_not_found_When_id_not_exist() {
+    void should_report_not_found_When_import_job_id_not_exist() {
         // Given
         UUID importedJobId = UUID.randomUUID();
         UUID notExistJobId = UUID.randomUUID();
@@ -175,7 +175,7 @@ class FileControllerTest {
         // Then
         response.andExpect(status().isOk())
                 .andExpect(jsonPath("$.statusCode").value(HttpStatus.NOT_FOUND.value()))
-                .andExpect(jsonPath("$.statusMessage").value(String.format("Can not find the job by id: %s", notExistJobId)));
+                .andExpect(jsonPath("$.statusMessage").value(String.format("Can not find the import job by id: %s", notExistJobId)));
     }
 
     @Test
@@ -205,5 +205,54 @@ class FileControllerTest {
         assertEquals(1, all.size());
         assertEquals(JobStatus.DONE, all.get(0).getJobStatus());
         assertEquals(sectionId, all.get(0).getJobId().toString());
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    @SneakyThrows
+    void should_get_export_job_by_id() {
+        // Given
+        UUID exportedJobId = UUID.randomUUID();
+        ExportJob exportJob = ExportJob.builder()
+                .jobId(exportedJobId)
+                .jobStatus(JobStatus.DONE)
+                .build();
+        exportJobRepository.save(exportJob);
+
+        // When
+        String requestUrl = "/export/" + exportedJobId;
+        MockHttpServletRequestBuilder content = get(requestUrl);
+        ResultActions response = mvc.perform(content);
+
+        // Then
+        response.andExpect(status().isOk())
+                .andExpect(jsonPath("$.statusCode").value(HttpStatus.OK.value()))
+                .andExpect(jsonPath("$.response.jobId").value(exportJob.toString()));
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    @SneakyThrows
+    void should_report_not_found_When_export_job_id_not_exist() {
+        // Given
+        UUID exportedJobId = UUID.randomUUID();
+        UUID notExistJobId = UUID.randomUUID();
+        ExportJob exportedJob = ExportJob.builder()
+                .jobId(exportedJobId)
+                .jobStatus(JobStatus.DONE)
+                .build();
+        exportJobRepository.save(exportedJob);
+
+        // When
+        String requestUrl = "/export/" + notExistJobId;
+        MockHttpServletRequestBuilder content = get(requestUrl);
+        ResultActions response = mvc.perform(content);
+
+        // Then
+        response.andExpect(status().isOk())
+                .andExpect(jsonPath("$.statusCode").value(HttpStatus.NOT_FOUND.value()))
+                .andExpect(jsonPath("$.statusMessage").value(String.format("Can not find the export job by id: %s", notExistJobId)));
     }
 }

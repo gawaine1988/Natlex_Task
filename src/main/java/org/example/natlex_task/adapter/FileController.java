@@ -2,6 +2,7 @@ package org.example.natlex_task.adapter;
 
 import org.example.natlex_task.adapter.dto.ApiResponse;
 import org.example.natlex_task.application.FileService;
+import org.example.natlex_task.domain.model.ExportJob;
 import org.example.natlex_task.domain.model.ImportJob;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -35,6 +36,13 @@ public class FileController {
     public ApiResponse<UUID> getExportId() {
         UUID exportId = fileService.startExportFileJob();
         return ApiResponse.ok(exportId);
+    }
+
+    @GetMapping("/export/{id}")
+    public ApiResponse<ExportJob> getExportJob(@PathVariable("id") String id) {
+        validateUUID(id);
+        ExportJob exportJob = fileService.getExportJobById(id);
+        return ApiResponse.ok(exportJob);
     }
 
 }
