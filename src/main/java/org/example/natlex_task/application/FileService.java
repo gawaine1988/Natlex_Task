@@ -175,7 +175,7 @@ public class FileService {
         return true;
     }
 
-    public ImportJob findJobById(UUID uuid) {
+    public ImportJob getImportJobById(UUID uuid) {
         Optional<ImportJob> importJob = importJobRepository.findById(uuid);
         if (importJob.isEmpty()) {
             throw new ResourceNotFoundException(String.format("Can not find the import job by id: %s", uuid));
@@ -261,6 +261,10 @@ public class FileService {
     }
 
     public ExportJob getExportJobById(String id) {
-        return null;
+        Optional<ExportJob> exportJob = exportJobRepository.findById(UUID.fromString(id));
+        if (exportJob.isEmpty()) {
+            throw new ResourceNotFoundException(String.format("Can not find the export job by id: %s", id));
+        }
+        return exportJob.get();
     }
 }

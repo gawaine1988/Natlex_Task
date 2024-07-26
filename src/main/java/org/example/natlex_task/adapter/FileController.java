@@ -28,7 +28,7 @@ public class FileController {
     @GetMapping("/import/{id}")
     public ApiResponse<ImportJob> getSectionById(@PathVariable("id") String id) {
         validateUUID(id);
-        ImportJob importJob = fileService.findJobById(UUID.fromString(id));
+        ImportJob importJob = fileService.getImportJobById(UUID.fromString(id));
         return ApiResponse.ok(importJob);
     }
 

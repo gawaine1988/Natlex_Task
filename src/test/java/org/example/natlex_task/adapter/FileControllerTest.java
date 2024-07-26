@@ -228,7 +228,7 @@ class FileControllerTest {
         // Then
         response.andExpect(status().isOk())
                 .andExpect(jsonPath("$.statusCode").value(HttpStatus.OK.value()))
-                .andExpect(jsonPath("$.response.jobId").value(exportJob.toString()));
+                .andExpect(jsonPath("$.response.jobId").value(exportedJobId.toString()));
     }
 
     @Test
