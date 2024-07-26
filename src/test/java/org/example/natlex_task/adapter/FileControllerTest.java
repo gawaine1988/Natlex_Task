@@ -204,6 +204,6 @@ class FileControllerTest {
         List<ExportJob> all = exportJobRepository.findAll();
         assertEquals(1, all.size());
         assertEquals(JobStatus.DONE, all.get(0).getJobStatus());
-        assertEquals(sectionId, all.get(0).getJobId());
+        assertEquals(sectionId, all.get(0).getJobId().toString());
     }
 }

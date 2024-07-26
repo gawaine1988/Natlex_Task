@@ -1,8 +1,9 @@
 package org.example.natlex_task.application;
 
 import lombok.SneakyThrows;
-import org.example.natlex_task.domain.model.ImportJob;
-import org.example.natlex_task.domain.model.JobStatus;
+import org.example.natlex_task.domain.model.*;
+import org.example.natlex_task.domain.repository.ExportJobRepository;
+import org.example.natlex_task.domain.repository.SectionRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -14,23 +15,35 @@ import org.example.natlex_task.domain.repository.ImportJobRepository;
 import org.mockito.MockitoAnnotations;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
+import sun.misc.Unsafe;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.lang.reflect.Field;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.example.natlex_task.application.FileService.EXPORT_FILE_PAH;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-class ImportServiceTest {
+class FileServiceTest {
     @Mock
     private ImportJobRepository importJobRepository;
 
+    @Mock
+    private SectionRepository sectionRepository;
+
+    @Mock
+    private ExportJobRepository exportJobRepository;
+
     @InjectMocks
-    private FileService importService;
+    private FileService fileService;
 
     @BeforeEach
     void setUp() {
@@ -49,7 +62,7 @@ class ImportServiceTest {
 
         // When
         when(importJobRepository.save(any(ImportJob.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        UUID jobId = importService.importFile(multipartFile);
+        UUID jobId = fileService.importFile(multipartFile);
 
         // Then
         ArgumentCaptor<ImportJob> importJobCaptor = ArgumentCaptor.forClass(ImportJob.class);
@@ -70,7 +83,7 @@ class ImportServiceTest {
         // When
         when(importJobRepository.save(any(ImportJob.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        UUID jobId = importService.importFile(multipartFile);
+        UUID jobId = fileService.importFile(multipartFile);
 
         // Then
         ArgumentCaptor<ImportJob> importJobCaptor = ArgumentCaptor.forClass(ImportJob.class);
@@ -93,7 +106,7 @@ class ImportServiceTest {
         // When
         when(importJobRepository.save(any(ImportJob.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        UUID jobId = importService.importFile(multipartFile);
+        UUID jobId = fileService.importFile(multipartFile);
 
         // Then
         ArgumentCaptor<ImportJob> importJobCaptor = ArgumentCaptor.forClass(ImportJob.class);
@@ -115,7 +128,7 @@ class ImportServiceTest {
         // When
         when(importJobRepository.save(any(ImportJob.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        UUID jobId = importService.importFile(multipartFile);
+        UUID jobId = fileService.importFile(multipartFile);
 
         // Then
         ArgumentCaptor<ImportJob> importJobCaptor = ArgumentCaptor.forClass(ImportJob.class);
@@ -138,7 +151,7 @@ class ImportServiceTest {
         // When
         when(importJobRepository.save(any(ImportJob.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        UUID jobId = importService.importFile(multipartFile);
+        UUID jobId = fileService.importFile(multipartFile);
 
         // Then
         ArgumentCaptor<ImportJob> importJobCaptor = ArgumentCaptor.forClass(ImportJob.class);
@@ -161,7 +174,7 @@ class ImportServiceTest {
         // When
         when(importJobRepository.save(any(ImportJob.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        UUID jobId = importService.importFile(multipartFile);
+        UUID jobId = fileService.importFile(multipartFile);
 
         // Then
         ArgumentCaptor<ImportJob> importJobCaptor = ArgumentCaptor.forClass(ImportJob.class);
@@ -184,7 +197,7 @@ class ImportServiceTest {
         // When
         when(importJobRepository.save(any(ImportJob.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        UUID jobId = importService.importFile(multipartFile);
+        UUID jobId = fileService.importFile(multipartFile);
 
         // Then
         ArgumentCaptor<ImportJob> importJobCaptor = ArgumentCaptor.forClass(ImportJob.class);
@@ -207,7 +220,7 @@ class ImportServiceTest {
         // When
         when(importJobRepository.save(any(ImportJob.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        UUID jobId = importService.importFile(multipartFile);
+        UUID jobId = fileService.importFile(multipartFile);
 
         // Then
         ArgumentCaptor<ImportJob> importJobCaptor = ArgumentCaptor.forClass(ImportJob.class);
@@ -230,7 +243,7 @@ class ImportServiceTest {
         // When
         when(importJobRepository.save(any(ImportJob.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        UUID jobId = importService.importFile(multipartFile);
+        UUID jobId = fileService.importFile(multipartFile);
 
         // Then
         ArgumentCaptor<ImportJob> importJobCaptor = ArgumentCaptor.forClass(ImportJob.class);
@@ -251,5 +264,46 @@ class ImportServiceTest {
 
         MultipartFile multipartFile = new MockMultipartFile("file", file.getName(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileStream);
         return multipartFile;
+    }
+
+    @Test
+    @SneakyThrows
+    public void shouldExportFile() {
+        // Given
+        GeologicalClass gc1 = GeologicalClass.builder().geologicalClassId(UUID.randomUUID()).code("GC11").name("Geo Class 11").build();
+        GeologicalClass gc2 = GeologicalClass.builder().geologicalClassId(UUID.randomUUID()).code("GC22").name("Geo Class 22").build();
+        GeologicalClass gc3 = GeologicalClass.builder().geologicalClassId(UUID.randomUUID()).code("GC33").name("Geo Class 33").build();
+        ArrayList<GeologicalClass> geologicalClasses1 = new ArrayList<>() {{
+            add(gc1);
+            add(gc2);
+        }};
+
+        ArrayList<GeologicalClass> geologicalClasses2 = new ArrayList<>() {{
+            add(gc3);
+        }};
+
+        Section section1 = Section.builder().sectionId(UUID.randomUUID()).name("Section 1").geologicalClasses(geologicalClasses1).build();
+        Section section2 = Section.builder().sectionId(UUID.randomUUID()).name("Section 2").geologicalClasses(geologicalClasses2).build();
+
+        List<Section> savedSections = new ArrayList<>(){{
+            add(section1);
+            add(section2);
+        }};
+
+        // When
+        when(sectionRepository.findAll()).thenReturn(savedSections);
+
+        when(exportJobRepository.save(any(ExportJob.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        UUID jobId = fileService.startExportFileJob();
+
+        // Then
+        ArgumentCaptor<ExportJob> exportJobCaptor = ArgumentCaptor.forClass(ExportJob.class);
+        verify(exportJobRepository, times(2)).save(exportJobCaptor.capture());
+
+        ExportJob exportJob = exportJobCaptor.getValue();
+        assertEquals(jobId, exportJob.getJobId());
+        assertEquals(JobStatus.DONE, exportJob.getJobStatus());
+        assertTrue(Files.exists(Paths.get(EXPORT_FILE_PAH+jobId+".xlsx")));
+
     }
 }

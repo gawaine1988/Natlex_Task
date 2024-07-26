@@ -33,7 +33,7 @@ public class FileController {
 
     @GetMapping("/export")
     public ApiResponse<UUID> getExportId() {
-        UUID exportId = fileService.exportFile();
+        UUID exportId = fileService.startExportFileJob();
         return ApiResponse.ok(exportId);
     }
 

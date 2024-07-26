@@ -26,4 +26,6 @@ public class ExportJob {
     private JobStatus jobStatus;
 
     private String errorMessage;
+
+    private String filePath;
 }
