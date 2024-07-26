@@ -5,6 +5,10 @@ import org.example.natlex_task.application.FileService;
 import org.example.natlex_task.domain.model.ExportJob;
 import org.example.natlex_task.domain.model.ImportJob;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -43,6 +47,16 @@ public class FileController {
         validateUUID(id);
         ExportJob exportJob = fileService.getExportJobById(id);
         return ApiResponse.ok(exportJob);
+    }
+
+    @GetMapping("/export/{id}/file")
+    public ResponseEntity<Resource> getExportFile(@PathVariable("id") String id) {
+        validateUUID(id);
+        Resource file  = fileService.getExportFileById(id);
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + file.getFilename() + "\"")
+                .body(file);
     }
 
 }

@@ -18,7 +18,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.TestPropertySource;
@@ -37,8 +39,7 @@ import static org.hamcrest.Matchers.hasLength;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @AutoConfigureMockMvc
@@ -255,4 +256,54 @@ class FileControllerTest {
                 .andExpect(jsonPath("$.statusCode").value(HttpStatus.NOT_FOUND.value()))
                 .andExpect(jsonPath("$.statusMessage").value(String.format("Can not find the export job by id: %s", notExistJobId)));
     }
+
+    @Test
+    @Transactional
+    @Rollback
+    @SneakyThrows
+    void should_get_file_by_export_job_id() {
+        // Given
+        UUID exportedJobId = UUID.fromString("1882b901-335b-4ea0-a6fd-8c19437d1220");
+        ExportJob exportJob = ExportJob.builder()
+                .jobId(exportedJobId)
+                .jobStatus(JobStatus.DONE)
+                .build();
+        exportJobRepository.save(exportJob);
+
+        // When
+        String requestUrl = "/export/" + exportedJobId+"/file";
+        MockHttpServletRequestBuilder content = get(requestUrl);
+        ResultActions response = mvc.perform(content);
+
+        // Then
+        response.andExpect(status().isOk())
+                .andExpect(header().string(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=1882b901-335b-4ea0-a6fd-8c19437d1220.xlsx"))
+                .andExpect(content().contentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    @SneakyThrows
+    void should_report_not_found_When_export_file_with_not_exist_job_id() {
+        // Given
+        UUID exportedJobId = UUID.randomUUID();
+        UUID notExistJobId = UUID.randomUUID();
+        ExportJob exportJob = ExportJob.builder()
+                .jobId(exportedJobId)
+                .jobStatus(JobStatus.DONE)
+                .build();
+        exportJobRepository.save(exportJob);
+
+        // When
+        String requestUrl = "/export/" + notExistJobId+"/file";
+        MockHttpServletRequestBuilder content = get(requestUrl);
+        ResultActions response = mvc.perform(content);
+
+        // Then
+        response.andExpect(status().isOk())
+                .andExpect(jsonPath("$.statusCode").value(HttpStatus.NOT_FOUND.value()))
+                .andExpect(jsonPath("$.statusMessage").value(String.format("Can not find the export job by id: %s", notExistJobId)));
+    }
+
 }

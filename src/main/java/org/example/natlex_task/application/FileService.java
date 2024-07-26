@@ -9,6 +9,7 @@ import org.example.natlex_task.domain.model.*;
 import org.example.natlex_task.domain.repository.ExportJobRepository;
 import org.example.natlex_task.domain.repository.ImportJobRepository;
 import org.example.natlex_task.domain.repository.SectionRepository;
+import org.springframework.core.io.Resource;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -266,5 +267,9 @@ public class FileService {
             throw new ResourceNotFoundException(String.format("Can not find the export job by id: %s", id));
         }
         return exportJob.get();
+    }
+
+    public Resource getExportFileById(String id) {
+        return null;
     }
 }
