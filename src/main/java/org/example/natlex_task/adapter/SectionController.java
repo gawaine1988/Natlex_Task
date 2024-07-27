@@ -34,6 +34,11 @@ public class SectionController {
         return ApiResponse.ok(id);
     }
 
+    @PostMapping(path = "/test")
+    public ApiResponse<UUID> createTest( ) {
+        return ApiResponse.ok();
+    }
+
     @GetMapping("/{sectionId}")
     public ApiResponse<SectionDto> getSectionById(@PathVariable("sectionId") String sectionId) {
         validateUUID(sectionId);
