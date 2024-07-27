@@ -4,19 +4,28 @@ import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.util.Strings;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.example.natlex_task.application.exception.JobFailedException;
+import org.example.natlex_task.application.exception.JobInProgressException;
 import org.example.natlex_task.application.exception.ResourceNotFoundException;
 import org.example.natlex_task.domain.model.*;
 import org.example.natlex_task.domain.repository.ExportJobRepository;
 import org.example.natlex_task.domain.repository.ImportJobRepository;
 import org.example.natlex_task.domain.repository.SectionRepository;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -262,6 +271,10 @@ public class FileService {
     }
 
     public ExportJob getExportJobById(String id) {
+        return getExportJob(id);
+    }
+
+    private ExportJob getExportJob(String id) {
         Optional<ExportJob> exportJob = exportJobRepository.findById(UUID.fromString(id));
         if (exportJob.isEmpty()) {
             throw new ResourceNotFoundException(String.format("Can not find the export job by id: %s", id));
@@ -270,6 +283,22 @@ public class FileService {
     }
 
     public Resource getExportFileById(String id) {
-        return null;
+        ExportJob exportJob = getExportJob(id);
+
+        if (exportJob.getJobStatus() == JobStatus.IN_PROGRESS) {
+            throw new JobInProgressException("Job is still in progress: " + id);
+        }
+
+        if (exportJob.getJobStatus() == JobStatus.ERROR) {
+            throw new JobFailedException("Job failed: " + id);
+        }
+
+        Path filePath = Paths.get(exportJob.getFilePath());
+
+        try {
+            return new UrlResource(filePath.toUri());
+        } catch (MalformedURLException e) {
+            throw new ResourceNotFoundException("File not found: " + filePath, e);
+        }
     }
 }

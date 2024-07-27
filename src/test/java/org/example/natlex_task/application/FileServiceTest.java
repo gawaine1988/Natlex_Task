@@ -6,6 +6,9 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.example.natlex_task.application.exception.JobFailedException;
+import org.example.natlex_task.application.exception.JobInProgressException;
+import org.example.natlex_task.application.exception.ResourceNotFoundException;
 import org.example.natlex_task.domain.model.*;
 import org.example.natlex_task.domain.repository.ExportJobRepository;
 import org.example.natlex_task.domain.repository.ImportJobRepository;
@@ -17,7 +20,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
@@ -27,10 +29,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 import static org.example.natlex_task.application.FileService.EXPORT_FILE_PAH;
 import static org.junit.jupiter.api.Assertions.*;
@@ -62,7 +61,7 @@ class FileServiceTest {
 
     @Test
     @SneakyThrows
-    public void shouldImportFile() {
+    public void should_import_file_and_save_sections() {
         //Given
         MultipartFile multipartFile = generateMutipartFile("src/test/resources/testfile.xlsx");
 
@@ -168,7 +167,6 @@ class FileServiceTest {
         assertEquals(JobStatus.ERROR, savedImportJob.getJobStatus());
         assertEquals("The file header is missing.", savedImportJob.getErrorMessage());
         assertNull(savedImportJob.getSections());
-
     }
 
     @Test
@@ -191,7 +189,6 @@ class FileServiceTest {
         assertEquals(JobStatus.ERROR, savedImportJob.getJobStatus());
         assertEquals("The file header is missing.", savedImportJob.getErrorMessage());
         assertNull(savedImportJob.getSections());
-
     }
 
     @Test
@@ -214,7 +211,6 @@ class FileServiceTest {
         assertEquals(JobStatus.ERROR, savedImportJob.getJobStatus());
         assertEquals("The file header is not correct.", savedImportJob.getErrorMessage());
         assertNull(savedImportJob.getSections());
-
     }
 
     @Test
@@ -315,6 +311,81 @@ class FileServiceTest {
         boolean result = areExcelFilesEqual("src/test/resources/correct_export_file.xlsx", EXPORT_FILE_PAH + jobId + ".xlsx");
         assertTrue(result, "The Excel files are not the same!");
     }
+
+
+    @Test
+    @SneakyThrows
+    public void should_get_exported_file() {
+        // Given
+        UUID exportJobId = UUID.randomUUID();
+        ExportJob exportJob = ExportJob
+                .builder()
+                .jobStatus(JobStatus.DONE)
+                .jobId(exportJobId)
+                .filePath(EXPORT_FILE_PAH + exportJobId + ".xlsx")
+                .build();
+
+        // When
+        when(exportJobRepository.findById(exportJobId)).thenReturn(Optional.of(exportJob));
+        Resource exportFileById = fileService.getExportFileById(exportJobId.toString());
+
+        // Then
+        assertTrue(exportFileById.getURI().toString().contains(EXPORT_FILE_PAH + exportJobId + ".xlsx"));
+    }
+
+    @Test
+    @SneakyThrows
+    public void should_throw_exception_when_export_file_job_is_in_progress() {
+        // Given
+        UUID inProgressJobId = UUID.randomUUID();
+        ExportJob exportJob = ExportJob.builder().jobStatus(JobStatus.IN_PROGRESS).jobId(inProgressJobId).build();
+
+        // When
+        when(exportJobRepository.findById(inProgressJobId)).thenReturn(Optional.of(exportJob));
+        JobInProgressException exception = assertThrows(JobInProgressException.class, () -> {
+            fileService.getExportFileById(inProgressJobId.toString());
+        });
+
+        // Then
+        assertEquals("Job is still in progress: " + inProgressJobId, exception.getMessage());
+    }
+
+
+    @Test
+    @SneakyThrows
+    public void should_throw_exception_when_export_file_job_is_error() {
+        // Given
+        UUID inProgressJobId = UUID.randomUUID();
+        ExportJob exportJob = ExportJob.builder().jobStatus(JobStatus.ERROR).jobId(inProgressJobId).build();
+
+        // When
+        when(exportJobRepository.findById(inProgressJobId)).thenReturn(Optional.of(exportJob));
+        JobFailedException exception = assertThrows(JobFailedException.class, () -> {
+            fileService.getExportFileById(inProgressJobId.toString());
+        });
+
+        // Then
+        assertEquals("Job failed: " + inProgressJobId, exception.getMessage());
+    }
+
+    @Test
+    @SneakyThrows
+    public void should_throw_exception_when_get_file_with_not_exist_id() {
+        // Given
+        UUID inProgressJobId = UUID.randomUUID();
+        UUID notExistInProgressJobId = UUID.randomUUID();
+        ExportJob exportJob = ExportJob.builder().jobStatus(JobStatus.DONE).jobId(inProgressJobId).build();
+
+        // When
+        when(exportJobRepository.findById(inProgressJobId)).thenReturn(Optional.of(exportJob));
+        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> {
+            fileService.getExportFileById(notExistInProgressJobId.toString());
+        });
+
+        // Then
+        assertEquals(String.format("Can not find the export job by id: %s", notExistInProgressJobId), exception.getMessage());
+    }
+
 
     private boolean areExcelFilesEqual(String filePath1, String filePath2) throws IOException {
 

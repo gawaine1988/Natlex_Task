@@ -267,17 +267,18 @@ class FileControllerTest {
         ExportJob exportJob = ExportJob.builder()
                 .jobId(exportedJobId)
                 .jobStatus(JobStatus.DONE)
+                .filePath("src/test/resources/" + exportedJobId + ".xlsx")
                 .build();
         exportJobRepository.save(exportJob);
 
         // When
-        String requestUrl = "/export/" + exportedJobId+"/file";
+        String requestUrl = "/export/" + exportedJobId + "/file";
         MockHttpServletRequestBuilder content = get(requestUrl);
         ResultActions response = mvc.perform(content);
 
         // Then
         response.andExpect(status().isOk())
-                .andExpect(header().string(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=1882b901-335b-4ea0-a6fd-8c19437d1220.xlsx"))
+                .andExpect(header().string(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"1882b901-335b-4ea0-a6fd-8c19437d1220.xlsx\""))
                 .andExpect(content().contentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
     }
 
@@ -288,7 +289,7 @@ class FileControllerTest {
     void should_report_not_found_When_export_file_with_not_exist_job_id() {
         // Given
         UUID exportedJobId = UUID.randomUUID();
-        UUID notExistJobId = UUID.randomUUID();
+        UUID notExistID = UUID.randomUUID();
         ExportJob exportJob = ExportJob.builder()
                 .jobId(exportedJobId)
                 .jobStatus(JobStatus.DONE)
@@ -296,14 +297,63 @@ class FileControllerTest {
         exportJobRepository.save(exportJob);
 
         // When
-        String requestUrl = "/export/" + notExistJobId+"/file";
+        String requestUrl = "/export/" + notExistID + "/file";
         MockHttpServletRequestBuilder content = get(requestUrl);
         ResultActions response = mvc.perform(content);
 
         // Then
         response.andExpect(status().isOk())
                 .andExpect(jsonPath("$.statusCode").value(HttpStatus.NOT_FOUND.value()))
-                .andExpect(jsonPath("$.statusMessage").value(String.format("Can not find the export job by id: %s", notExistJobId)));
+                .andExpect(jsonPath("$.statusMessage").value(String.format("Can not find the export job by id: %s", notExistID)));
+    }
+
+
+    @Test
+    @Transactional
+    @Rollback
+    @SneakyThrows
+    void should_report_in_progress_when_export_job_is_in_progress() {
+        // Given
+        UUID inProgressId = UUID.randomUUID();
+        ExportJob exportJob = ExportJob.builder()
+                .jobId(inProgressId)
+                .jobStatus(JobStatus.IN_PROGRESS)
+                .build();
+        exportJobRepository.save(exportJob);
+
+        // When
+        String requestUrl = "/export/" + inProgressId + "/file";
+        MockHttpServletRequestBuilder content = get(requestUrl);
+        ResultActions response = mvc.perform(content);
+
+        // Then
+        response.andExpect(status().isOk())
+                .andExpect(jsonPath("$.statusCode").value(HttpStatus.BAD_REQUEST.value()))
+                .andExpect(jsonPath("$.statusMessage").value("Job is still in progress: " + inProgressId));
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    @SneakyThrows
+    void should_report_error_when_export_job_is_error() {
+        // Given
+        UUID errorJobId = UUID.randomUUID();
+        ExportJob exportJob = ExportJob.builder()
+                .jobId(errorJobId)
+                .jobStatus(JobStatus.ERROR)
+                .build();
+        exportJobRepository.save(exportJob);
+
+        // When
+        String requestUrl = "/export/" + errorJobId + "/file";
+        MockHttpServletRequestBuilder content = get(requestUrl);
+        ResultActions response = mvc.perform(content);
+
+        // Then
+        response.andExpect(status().isOk())
+                .andExpect(jsonPath("$.statusCode").value(HttpStatus.BAD_REQUEST.value()))
+                .andExpect(jsonPath("$.statusMessage").value("Job failed: " + errorJobId));
     }
 
 }
