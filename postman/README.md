@@ -33,6 +33,16 @@ This directory contains the Postman collection to facilitate testing of the Natl
    - CRUD operations for Sections and GeologicalClasses.
    - Import and Export operations for XLS files.
    - Checking the status of import/export jobs.
+   
+5. **Importing a File**: To import a file using the `http://localhost:8080/import` endpoint:
+   - Open Postman and select the POST request for the `/import` endpoint from the collection.
+   - Go to the `Body` tab.
+   - Select `form-data`.
+   - In the `Key` field, enter `file` (this must match the `@RequestParam("file")` in your API).
+   - In the `Value` field, click on the dropdown menu and select `File`.
+   - Click on the `Select Files` button and choose the file you want to import from your local system.
+   - Ensure the `Content-Type` header is set to `multipart/form-data`.
+   - Click the `Send` button to upload the file.
 
 ## Contact
 

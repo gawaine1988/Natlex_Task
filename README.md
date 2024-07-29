@@ -75,7 +75,7 @@ For POST requests, you need to include the CSRF token in the header.
 
 ### Example
 
-#### Importing a file with CSRF token:
+#### Create section with CSRF token:
 
 1. Obtain the CSRF token:
     ```sh
@@ -150,30 +150,32 @@ The application can be configured using the `application.properties` file locate
 
 ### Basic Authentication and CSRF Configuration
 In your security configuration, you can define the username, password, and CSRF configuration:
-```
+```java
 @Configuration
-@EnableWebSecurity
+@Profile("prod")
 public class SecurityConfig {
-
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http.csrf().csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-            .and()
-            .authorizeRequests()
-                .anyRequest().authenticated()
-            .and()
-            .httpBasic();
+        http
+                .authorizeHttpRequests(authorizeRequests ->
+                        authorizeRequests
+                                .anyRequest().authenticated()
+                )
+                .httpBasic()
+                .and()
+                .csrf() ;
 
         return http.build();
     }
 
     @Bean
-    public InMemoryUserDetailsManager userDetailsService() {
+    public UserDetailsService userDetailsService() {
         UserDetails user = User.withDefaultPasswordEncoder()
-            .username("user")
-            .password("password")
-            .roles("USER")
-            .build();
+                .username("user")
+                .password("password")
+                .roles("USER")
+                .build();
+
         return new InMemoryUserDetailsManager(user);
     }
 }
@@ -208,7 +210,7 @@ A Postman collection is provided in the repository to facilitate testing of the 
 ### Importing the Postman Collection
 1. Open Postman.
 2. Click on `Import`.
-3. Select the `Natlex_Task.postman_collection.json` file from the `postman` directory.
+3. Select the `Natlex_Task.postman_collection.json` and `Natlex.postman_environment.json` files from the `postman` directory.
 4. The collection will be imported, and you can use it to test the API endpoints.
 
 ## Contributing
