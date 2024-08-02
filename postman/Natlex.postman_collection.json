@@ -1,9 +1,9 @@
 {
 	"info": {
-		"_postman_id": "ae42f4c4-72df-4c4e-83ae-d36e66b08cfa",
+		"_postman_id": "235adba6-8341-4397-8520-31bc9d90b3ee",
 		"name": "Natlex",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "33928062"
+		"_exporter_id": "37287806"
 	},
 	"item": [
 		{
@@ -549,6 +549,21 @@
 		{
 			"name": "Download Exported File",
 			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "password",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "user",
+							"type": "string"
+						}
+					]
+				},
 				"method": "GET",
 				"header": [
 					{

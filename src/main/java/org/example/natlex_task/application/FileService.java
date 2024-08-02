@@ -2,16 +2,23 @@ package org.example.natlex_task.application;
 
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.util.Strings;
-import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.example.natlex_task.application.exception.JobFailedException;
 import org.example.natlex_task.application.exception.JobInProgressException;
 import org.example.natlex_task.application.exception.ResourceNotFoundException;
-import org.example.natlex_task.domain.model.*;
+import org.example.natlex_task.domain.model.ExportJob;
+import org.example.natlex_task.domain.model.GeologicalClass;
+import org.example.natlex_task.domain.model.ImportJob;
+import org.example.natlex_task.domain.model.JobStatus;
+import org.example.natlex_task.domain.model.Section;
 import org.example.natlex_task.domain.repository.ExportJobRepository;
 import org.example.natlex_task.domain.repository.ImportJobRepository;
 import org.example.natlex_task.domain.repository.SectionRepository;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.scheduling.annotation.Async;
@@ -19,14 +26,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.regex.Pattern;
 
 @Service

@@ -4,7 +4,11 @@ import org.example.natlex_task.adapter.dto.GeologicalClassDto;
 import org.example.natlex_task.adapter.dto.SectionDto;
 import org.example.natlex_task.domain.model.GeologicalClass;
 import org.example.natlex_task.domain.model.Section;
-import org.mapstruct.*;
+import org.mapstruct.AfterMapping;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
+import org.mapstruct.Named;
 import org.mapstruct.factory.Mappers;
 
 import java.util.List;

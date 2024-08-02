@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import org.example.natlex_task.application.exception.ResourceNotFoundException;
 import org.example.natlex_task.domain.model.Section;
 import org.example.natlex_task.domain.repository.GeologicalClassRepository;
-import org.example.natlex_task.domain.repository.ImportJobRepository;
 import org.example.natlex_task.domain.repository.SectionRepository;
 import org.springframework.stereotype.Service;
 
