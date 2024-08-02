@@ -1,4 +1,5 @@
 HELP.md
+.DS_Store
 target/
 src/ExportedFiles/*
 !.mvn/wrapper/maven-wrapper.jar
